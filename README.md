@@ -2,6 +2,9 @@
 
 Animate on scroll with ease
 
+
+[![npm version](https://badge.fury.io/js/scroll-out.svg)](https://badge.fury.io/js/scroll-out) [![Downloads](https://img.shields.io/npm/dm/scroll-out.svg)](https://www.npmjs.com/package/scroll-out)
+
 ## Why should I use this?
 - Animate or reveal elements as they scroll into view using CSS
 - Super tiny JavaScript library less than 1KB minified.

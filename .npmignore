@@ -1,0 +1,7 @@
+.alm
+.vscode
+.editorconfig
+.gitignore
+config/
+node_modules/
+src/

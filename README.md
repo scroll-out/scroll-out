@@ -7,7 +7,7 @@ Animate on scroll with ease
 
 ## Why should I use this?
 - Animate or reveal elements as they scroll into view using CSS
-- Super tiny JavaScript library less than 1KB minified.
+- Super tiny JavaScript library about 1KB minified.
 
 ## How does it work?
 
@@ -47,7 +47,7 @@ Install scroll-out from NPM:
 npm i scroll-out -S
 ```
 
-The import setup from the package and call it
+Them import ScrollOut from the package and call it
 
 ```js
 import ScrollOut from 'scroll-out'
@@ -55,12 +55,28 @@ import ScrollOut from 'scroll-out'
 ScrollOut({ /* options */ })
 ```
 
-## Setup Options
+## Options
 |Options|Description|
 |:-|:-|
-|once|Elements will only be changed from scroll-out to scroll-in once.  This is useful if you want to transition all elements exactly once.  The default value is true.|
 |delay|The amount of time in milliseconds to throttle detecting if elements are in view. By default this is 40 milliseconds.|
+|element|The top level element.  By default this is document|
+|forceReflow|Forces reflow when adding/removing classes. This is helpful for restarting animations.|
+|inClass|The class name to assign when the element is in the viewport.  Default value is "scroll-in". To use with animate.css, assign this to "animated"|
+|outClass|The class name to assign when the element is not in the viewport.  Default value is "scroll-out".|
+|once|Elements will only be changed from scroll-out to scroll-in once.  This is useful if you want to transition all elements exactly once.  The default value is true.|
 
+## Methods
+
+### teardown()
+If you no longer need a ScrollOut instance, call the ```teardown()``` function:
+
+```js
+var scrollOut = ScrollOut()
+
+/* do some stuff */
+
+scrollOut.teardown()
+```
 
 ## License
 

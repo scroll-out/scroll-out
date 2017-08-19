@@ -29,12 +29,12 @@ The following CSS will fade an element in over 1 second when it comes into view:
 ### CDN
 Include the following script in the head of your document
 ```html
-<script src="https://unpkg.com/scroll-out/dist/scroll-out-min.js"></script>
+<script src="https://unpkg.com/scroll-out/dist/scroll-out.min.js"></script>
 ```
 On document load/ready or in a script at the bottom the of the ```<body>```, do the following:
 
 ```js
-scroll-out.setup({ /* options */ })
+ScrollOut({ /* options */ })
 ```
 
 ### Installation from NPM
@@ -47,9 +47,9 @@ npm i scroll-out -S
 The import setup from the package and call it
 
 ```js
-import { setup } from 'scroll-out'
+import ScrollOut from 'scroll-out'
 
-setup({ /* options */ })
+ScrollOut({ /* options */ })
 ```
 
 ## Setup Options

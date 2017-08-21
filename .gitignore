@@ -3,6 +3,5 @@
 .idea
 .vs
 /node_modules
-/dist
 /lib
 npm-debug.log*

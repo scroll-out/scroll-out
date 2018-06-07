@@ -8,123 +8,123 @@ var scroll = "scroll";
 var defaultInClass = "scroll-in";
 var defaultOutClass = "scroll-out";
 
-function map(items, fn) {
-  var results = [];
-  for (var i = 0, ilen = items.length; i < ilen; i++) {
-    var result = fn(items[i], i, ilen);
-    if (result !== _) {
-      results.push(result);
-    }
-  }
-  return results;
-}
+function noop() {}
 
-function toggleClass(el, className, enabled, forceReflow) {
-  if (el.classList.contains(className) !== enabled) {
-    // set new state of class
-    el.classList.toggle(className, enabled);
-
-    if (forceReflow) {
-      // temporarily unset all classes
-      var classValue = el.className;
-      el.className = "";
-
-      // trigger reflow.  this is a workaround for partially defined animations
-      void el.offsetWidth;
-
-      // add classes back to element
-      el.className = classValue;
-    }
-  }
-}
-
-function on(el, event, fn) {
-  el.addEventListener(event, fn);
-}
-
-function off(el, event, fn) {
-  el.removeEventListener(event, fn);
+/** find elements */
+function $(e, parent) {
+    return !e || e.length == 0
+        ? // null or empty string returns empty array
+          []
+        : e.nodeName
+            ? // a single element is wrapped in an array
+              [e]
+            : // selector and NodeList are converted to Element[]
+              [].slice.call(e[0].nodeName ? e : (parent || document).querySelectorAll(e));
 }
 
 var main = function(opts) {
-  // set default options
-  var opts = opts || {};
-  var once = opts.once !== false;
-  var delay = opts.delay || 40;
-  var forceReflow = opts.forceReflow;
-  var inClass = opts.inClass || defaultInClass;
-  var outClass = opts.outClass || defaultOutClass;
-  var selector = "." + inClass + ",." + outClass;
-  var element =
-    (typeof opts.element === "string"
-      ? document.querySelector(element)
-      : opts.element) || document;
+    var lastCheck,
+        lastScroll,
+        timeout,
+        rects,
+        offset = 0,
+        scrollTop = 0;
 
-  // Percentage offset of viewport before triggering
-  var lastCheck = _;
-  var lastScroll = _;
-  var timeout = _;
-  var offset = 0;
-  var scrollTop = 0;
-  var rects = [];
+    // set default options
+    var opts = opts || {};
+    var once = opts.once !== false;
+    var delay = opts.delay || 40;
+    var forceReflow = opts.forceReflow;
+    var onChange = opts.onChange || noop;
+    var onVisible = opts.onVisible || noop;
+    var onHidden = opts.onHidden || noop;
+ 
+    var inClass = opts.inClass || defaultInClass;
+    var outClass = opts.outClass || defaultOutClass;
+    var targets = opts.targets || ("." + inClass + ",." + outClass);
 
-  var index = function() {
-    return (rects = map(element.querySelectorAll(selector), function(el) {
-      var rect = el.getBoundingClientRect();
-      rect.L = el;
-      return rect;
-    }));
-  };
+    var scope = $(opts.scope || document)[0];
 
-  var update = function() {
-    timeout = _;
-    var height = win.innerHeight;
+    var index = function() {
+        rects = $(targets, scope).map(function(el) {
+            var rect = el.getBoundingClientRect();
+            rect.L = el;
+            return rect;
+        });
+    };
 
-    rects = map(rects, function(rect, i) {
-      var show =
-        rect.bottom > scrollTop &&
-        rect.top < scrollTop + height - height * offset;
+    var update = function() {
+        timeout = _;
+        var height = win.innerHeight;
 
-      if (rect.show !== show) {
-        toggleClass(rect.L, inClass, show, forceReflow);
-        toggleClass(rect.L, outClass, !show, forceReflow);
-      }
+        rects = rects.reduce(function(result, rect) {
+            // figure out if visible
+            var show = rect.bottom > scrollTop && rect.top < scrollTop + height - height * offset;
+            // if last state is not the same, flip the classes
+            if (rect.show !== show) {
+                var el = rect.L;
 
-      rect.show = show;
+                // set new state of class
+                el.classList.toggle(inClass, show);
+                el.classList.toggle(outClass, !show);
 
-      return once && show ? _ : rect;
+                // handle forcibly reflowing the document
+                if (forceReflow) {
+                    // temporarily unset all classes
+                    var classValue = el.className;
+                    el.className = "";
+
+                    // trigger reflow.  this is a workaround for partially defined animations
+                    void el.offsetWidth;
+
+                    // add classes back to element
+                    el.className = classValue;
+                }
+
+                // handle callbacks
+                onChange(el, show);
+                !show && onHidden(el);
+                show && onVisible(el);
+            }
+            // set the new state
+            rect.show = show;
+            // if this is shown multiple times, put it back in the list
+            (once && show) || result.push(rect);
+            return result;
+        }, []);
+
+        lastScroll = scrollTop;
+    };
+
+    var check = function() {
+        if (timeout === _ && rects.length && lastScroll !== scrollTop) {
+            timeout = setTimeout(update, delay);
+        }
+    };
+
+    var onScroll = function() {
+        scrollTop = win.pageYOffset;
+        check();
+    };
+
+    // run initialize index and check
+    index();
+    check();
+
+    // hook up document listeners to automatically detect changes
+    var events = [[win, resize, index], [win, resize, onScroll], [win, scroll, onScroll]];
+
+    events.some(function(e) {
+        e[0].addEventListener(e[1], e[2]);
     });
 
-    lastScroll = scrollTop;
-  };
-
-  var check = function() {
-    if (timeout === _ && rects.length && lastScroll !== scrollTop) {
-      timeout = setTimeout(update, delay);
-    }
-  };
-
-  var onScroll = function() {
-    scrollTop = win.pageYOffset;
-    check();
-  };
-
-  // run initialize index and check
-  index();
-  check();
-
-  // hook up document listeners to automatically detect changes
-  on(win, resize, index);
-  on(win, resize, onScroll);
-  on(win, scroll, onScroll);
-
-  return {
-    teardown: function() {
-      off(win, resize, index);
-      off(win, resize, onScroll);
-      off(win, scroll, onScroll);
-    }
-  };
+    return {
+        teardown: function() {
+            events.some(function(e) {
+                e[0].removeEventListener(e[1], e[2]);
+            });
+        }
+    };
 };
 
 return main;

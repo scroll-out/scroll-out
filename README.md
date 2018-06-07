@@ -58,12 +58,13 @@ ScrollOut({ /* options */ })
 ## Options
 |Options|Description|
 |:-|:-|
-|delay|The amount of time in milliseconds to throttle detecting if elements are in view. By default this is 40 milliseconds.|
 |scope|The top level element.  By default this is document. A css selector can also be used, but only the first match will be watched|
-|forceReflow|Forces reflow when adding/removing classes. This is helpful for restarting animations.|
+|targets|optional list of elements or a css selector.  By default, the the inClass and outClass are selected.|
 |inClass|The class name to assign when the element is in the viewport.  Default value is "scroll-in". To use with animate.css, assign this to "animated"|
 |outClass|The class name to assign when the element is not in the viewport.  Default value is "scroll-out".|
 |once|Elements will only be changed from scroll-out to scroll-in once.  This is useful if you want to transition all elements exactly once.  The default value is true.|
+|delay|The amount of time in milliseconds to throttle detecting if elements are in view. By default this is 40 milliseconds.|
+|forceReflow|Forces reflow when adding/removing classes. This is helpful for restarting animations.|
 
 ## Methods
 

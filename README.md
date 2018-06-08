@@ -59,24 +59,85 @@ ScrollOut({ /* options */ })
 |Options|Description|
 |:-|:-|
 |scope|The top level element.  By default this is document. A css selector can also be used, but only the first match will be watched|
-|targets|optional list of elements or a css selector.  By default, the the inClass and outClass are selected.|
+|targets|An optional list of elements or a css selector.  By default, the the inClass and outClass are selected.|
 |inClass|The class name to assign when the element is in the viewport.  Default value is "scroll-in". To use with animate.css, assign this to "animated"|
 |outClass|The class name to assign when the element is not in the viewport.  Default value is "scroll-out".|
-|once|Elements will only be changed from scroll-out to scroll-in once.  This is useful if you want to transition all elements exactly once.  The default value is true.|
-|delay|The amount of time in milliseconds to throttle detecting if elements are in view. By default this is 40 milliseconds.|
-|forceReflow|Forces reflow when adding/removing classes. This is helpful for restarting animations.|
+|once|Elements will only be changed from scroll-out to scroll-in once.  This is useful if you want to transition all elements exactly once.  The default value is false.|
+|delay|The amount of time in milliseconds to throttle detecting if elements are in view. By default this is 40 milliseconds.| 
 
 ## Methods
+
+### index()
+Manually searches for elements.  This is intended for when DOM elements are removed or inserted by a JS framework.
+
+### update()
+Manually checks if the elements have been updated.  This is intended for when a JS framework changes the visual layout of the DOM.
 
 ### teardown()
 If you no longer need a ScrollOut instance, call the ```teardown()``` function:
 
+
+## Tips
+
+### Forcing a CSS Animation to replay
+When using animate.css, you may need to force the animation to play a second time.  Luckily there is a handy way to force the browser to reflow the document and replay the animation:
+
 ```js
-var scrollOut = ScrollOut()
+ScrollOut({
+  inClass: 'animated',
+  onVisible: function(el) {
+    // remove the class
+    el.classList.remove('animated');
 
-/* do some stuff */
+    // force reflow
+    void el.offsetWidth;
 
-scrollOut.teardown()
+    // re-add the animated cl
+    el.classList.add('animated');
+  }
+})
+```
+
+### Using ScrollOut with a JS Framework
+Most JS frameworks have setup/teardown methods that should be used when using ScrollOut.
+
+- In VueJS, you should use the mounted/destroyed methods:
+```js
+export default {
+  data() {
+    return {
+      so: undefined
+    }
+  },
+  mounted() {
+    this.so = ScrollOut({
+      scope: this.$el
+    });
+  },
+  destroyed() {
+    this.so.teardown();
+  }
+})
+```
+
+- In Angular, you should use the ngAfterContentInit/ngOnDestroy methods:
+```ts
+@Component(/**/)
+export class MyComponent implements AfterContentInit, OnDestroy {
+  so: any;
+
+  constructor(private el: ElementRef) {}
+
+  ngAfterContentInit() {
+    this.so = ScrollOut({
+      scope: this.el.nativeElement
+    });
+  }
+
+  ngOnDestroy() {
+    this.so.teardown();
+  }
+}
 ```
 
 ## License

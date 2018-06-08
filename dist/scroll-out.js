@@ -1,8 +1,8 @@
 var ScrollOut = (function () {
 'use strict';
 
-var _ = undefined;
 var win = window;
+var doc = document;
 var resize = "resize";
 var scroll = "scroll";
 var defaultInClass = "scroll-in";
@@ -19,7 +19,7 @@ function $(e, parent) {
             ? // a single element is wrapped in an array
               [e]
             : // selector and NodeList are converted to Element[]
-              [].slice.call(e[0].nodeName ? e : (parent || document).querySelectorAll(e));
+              [].slice.call(e[0].nodeName ? e : (parent || doc).querySelectorAll(e));
 }
 
 var main = function(opts) {
@@ -32,73 +32,57 @@ var main = function(opts) {
 
     // set default options
     var opts = opts || {};
-    var once = opts.once !== false;
-    var delay = opts.delay || 40;
-    var forceReflow = opts.forceReflow;
-    var onChange = opts.onChange || noop;
-    var onVisible = opts.onVisible || noop;
-    var onHidden = opts.onHidden || noop;
- 
+
     var inClass = opts.inClass || defaultInClass;
     var outClass = opts.outClass || defaultOutClass;
-    var targets = opts.targets || ("." + inClass + ",." + outClass);
+    var targets = opts.targets || "." + inClass + ",." + outClass;
 
-    var scope = $(opts.scope || document)[0];
+    var scope = $(opts.scope || doc)[0];
 
     var index = function() {
         rects = $(targets, scope).map(function(el) {
-            var rect = el.getBoundingClientRect();
-            rect.L = el;
-            return rect;
+            return {
+                L: el,
+                R: el.getBoundingClientRect()
+            }
         });
     };
 
     var update = function() {
-        timeout = _;
+        timeout = 0;
         var height = win.innerHeight;
 
-        rects = rects.reduce(function(result, rect) {
+        for (var i = rects.length - 1; i > -1; --i) {
+            var rect = rects[i];
             // figure out if visible
-            var show = rect.bottom > scrollTop && rect.top < scrollTop + height - height * offset;
+            var show = rect.R.bottom > scrollTop && rect.R.top < scrollTop + height - height * offset;
             // if last state is not the same, flip the classes
-            if (rect.show !== show) {
+            if (rect.S !== show) {
                 var el = rect.L;
 
                 // set new state of class
                 el.classList.toggle(inClass, show);
                 el.classList.toggle(outClass, !show);
 
-                // handle forcibly reflowing the document
-                if (forceReflow) {
-                    // temporarily unset all classes
-                    var classValue = el.className;
-                    el.className = "";
-
-                    // trigger reflow.  this is a workaround for partially defined animations
-                    void el.offsetWidth;
-
-                    // add classes back to element
-                    el.className = classValue;
-                }
-
                 // handle callbacks
-                onChange(el, show);
-                !show && onHidden(el);
-                show && onVisible(el);
+                (opts.onChange || noop)(el, show);
+                ((show ? opts.onVisible : opts.onHidden) || noop)(el);
             }
             // set the new state
-            rect.show = show;
+            rect.S = show;
+
             // if this is shown multiple times, put it back in the list
-            (once && show) || result.push(rect);
-            return result;
-        }, []);
+            if (show && opts.once) {
+                result.splice(i, 1);
+            }
+        }
 
         lastScroll = scrollTop;
     };
 
     var check = function() {
-        if (timeout === _ && rects.length && lastScroll !== scrollTop) {
-            timeout = setTimeout(update, delay);
+        if (rects.length && lastScroll !== scrollTop) {
+            timeout = timeout || setTimeout(update, opts.delay || 40);
         }
     };
 
@@ -119,6 +103,8 @@ var main = function(opts) {
     });
 
     return {
+        index: index,
+        update: update,
         teardown: function() {
             events.some(function(e) {
                 e[0].removeEventListener(e[1], e[2]);

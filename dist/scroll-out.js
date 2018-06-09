@@ -101,7 +101,8 @@ var main = function(opts) {
     };
 
     var check = function() {
-        viewEnd = (viewStart = doc.scrollTop) + doc.clientHeight;
+        viewStart = win.pageYOffset || doc.scrollTop;
+        viewEnd = viewStart + doc.clientHeight;
         if (elements.length && lastViewStart !== viewStart) {
             timeout = timeout || setTimeout(update, opts.delay || 40);
         }

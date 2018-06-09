@@ -64,6 +64,9 @@ ScrollOut({ /* options */ })
 |outClass|The class name to assign when the element is not in the viewport.  Default value is "scroll-out".|
 |once|Elements will only be changed from scroll-out to scroll-in once.  This is useful if you want to transition all elements exactly once.  The default value is false.|
 |delay|The amount of time in milliseconds to throttle detecting if elements are in view. By default this is 40 milliseconds.| 
+|onShown(element)|callback for when an element is show|
+|onHidden(element)|Callback for when an element is hidden|
+|onChange(element, visible)|Callback for when an element changes visibility|
 
 ## Methods
 

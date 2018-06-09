@@ -2,13 +2,15 @@ var ScrollOut = (function () {
 'use strict';
 
 var win = window;
-var doc = document;
+var doc = document.documentElement;
 var resize = "resize";
 var scroll = "scroll";
-var defaultInClass = "scroll-in";
-var defaultOutClass = "scroll-out";
 
 function noop() {}
+
+function clamp(v, min, max) {
+    return min > v ? min : max < v ? max : v;
+}
 
 /** find elements */
 function $(e, parent) {
@@ -23,77 +25,74 @@ function $(e, parent) {
 }
 
 var main = function(opts) {
-    var lastCheck,
-        lastScroll,
-        timeout,
-        rects,
-        offset = 0,
-        scrollTop = 0;
-
     // set default options
     var opts = opts || {};
-
-    var inClass = opts.inClass || defaultInClass;
-    var outClass = opts.outClass || defaultOutClass;
+    var threshold = opts.threshold || 0;
+    var inClass = opts.inClass || "scroll-in";
+    var outClass = opts.outClass || "scroll-out";
     var targets = opts.targets || "." + inClass + ",." + outClass;
-
     var scope = $(opts.scope || doc)[0];
 
+    // define locals
+    var lastCheck, lastScroll, timeout, elements, viewPortStart, viewPortEnd;
+
     var index = function() {
-        rects = $(targets, scope).map(function(el) {
-            return {
-                L: el,
-                R: el.getBoundingClientRect()
-            }
-        });
+        elements = $(targets, scope).reverse();
+        onScroll();
     };
 
     var update = function() {
         timeout = 0;
-        var height = win.innerHeight;
 
-        for (var i = rects.length - 1; i > -1; --i) {
-            var rect = rects[i];
+        for (var i = elements.length - 1; i > -1; --i) {
+            var el = elements[i];
+
             // figure out if visible
-            var show = rect.R.bottom > scrollTop && rect.R.top < scrollTop + height - height * offset;
-            // if last state is not the same, flip the classes
-            if (rect.S !== show) {
-                var el = rect.L;
+            var show = false;
+            if (opts.offset) {
+                show = opts.offset <= viewPortStart;
+            } else {
+                var es = el.offsetTop;
+                var h = el.offsetHeight;
+                show = threshold < (clamp(es + h, viewPortStart, viewPortEnd) - clamp(es, viewPortStart, viewPortEnd)) / h;
+            }
 
+            // if last state is not the same, flip the classes
+            if (el._SO_ !== show) {
                 // set new state of class
                 el.classList.toggle(inClass, show);
                 el.classList.toggle(outClass, !show);
 
                 // handle callbacks
                 (opts.onChange || noop)(el, show);
-                ((show ? opts.onVisible : opts.onHidden) || noop)(el);
+                ((show ? opts.onShown : opts.onHidden) || noop)(el);
             }
-            // set the new state
-            rect.S = show;
+
+            // set the new state. we do this on the element, so re-queries pick up the correct state
+            el._SO_ = show;
 
             // if this is shown multiple times, put it back in the list
             if (show && opts.once) {
-                result.splice(i, 1);
+                elements.splice(i, 1);
             }
         }
 
-        lastScroll = scrollTop;
+        lastScroll = viewPortStart;
     };
 
     var check = function() {
-        if (rects.length && lastScroll !== scrollTop) {
+        if (elements.length && lastScroll !== viewPortStart) {
             timeout = timeout || setTimeout(update, opts.delay || 40);
         }
     };
 
     var onScroll = function() {
-        scrollTop = win.pageYOffset;
+        viewPortEnd = (viewPortStart = doc.scrollTop) + doc.clientHeight;
         check();
     };
 
     // run initialize index and check
     index();
-    check();
 
     // hook up document listeners to automatically detect changes
     var events = [[win, resize, index], [win, resize, onScroll], [win, scroll, onScroll]];

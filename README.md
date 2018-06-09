@@ -1,29 +1,119 @@
 # ScrollOut
 
-Animate on scroll with ease
+*Animate on Scroll*
 
 
 [![npm version](https://badge.fury.io/js/scroll-out.svg)](https://badge.fury.io/js/scroll-out) [![Downloads](https://img.shields.io/npm/dm/scroll-out.svg)](https://www.npmjs.com/package/scroll-out)
 
 ## Why should I use this?
-- Animate or reveal elements as they scroll into view using CSS
-- Super tiny JavaScript library about 1KB minified.
+- Animate or reveal elements as they scroll into view using CSS or JavaScript
+- Super tiny JavaScript library at 1KB minified.
+- Free for commercial and non-commercial use under the MIT license.
 
-## How does it work?
+## How do I use it?
 
-Install ScrollOut and decorate elements with the ```scroll-out``` class.  As elements become visible, ```scroll-out``` with be replaced with ```scroll-in``` and vice-versa.  Add your own CSS to make a big impression when things come into view.  That's it!
+Install ScrollOut and decorate elements with the ```scroll-out``` class.  As elements become visible, ```scroll-out``` with be replaced with ```scroll-in``` and vice-versa.  Add your own CSS or JS to make a big impression when things come into view.  That's it!
 
-## Example CSS
-The following CSS will fade an element in over 1 second when it comes into view:
+## Tips (How do I?...)
+
+### Perform a Fade In with CSS
+
+
+Add these classes to your css
 ```css
-.my-class {
+.fade-in {
   transition: opacity 1s;
 }
-.my-class.scroll-in {
+.fade-in.scroll-in {
   opacity: 1;
 }
-.my-class.scroll-out {
+.fade-in.scroll-out {
   opacity: 0;
+}
+```
+
+Add this to your page
+```html
+<script> ScrollOut(); </script>
+```
+
+
+### Force a CSS Animation to replay
+When using animate.css, you may need to force the animation to play a second time.  Luckily there is a handy way to force the browser to reflow the document and replay the animation:
+
+```js
+ScrollOut({
+  inClass: 'animated',
+  onVisible: function(el) {
+    // remove the class
+    el.classList.remove('animated');
+
+    // force reflow
+    void el.offsetWidth;
+
+    // re-add the animated cl
+    el.classList.add('animated');
+  }
+})
+```
+
+### Perform a Fade with JavaScript the first time an element appears
+
+
+```js
+ScrollOut({ 
+  onShown: function(el) {
+    // use the web animation API
+    el.animate([{ opacity: 0 }, { opacity: 1 }], 1000);
+  },
+  onHidden: function(el) {
+    // hide the element initially
+    el.style.opacity = 0;
+  }
+})
+```
+
+> This code sample uses the Web Animation API (Available on Chrome and FireFox). The general idea works for any animation library.
+
+### Use ScrollOut with a JS Framework
+Most JS frameworks have setup/teardown methods that should be used when using ScrollOut.
+
+#### Vue
+```js
+export default {
+  data() {
+    return {
+      so: undefined
+    }
+  },
+  mounted() {
+    this.so = ScrollOut({
+      scope: this.$el
+    });
+  },
+  destroyed() {
+    this.so.teardown();
+  }
+})
+```
+
+#### Angular
+```ts
+@Component(/**/)
+export class MyComponent implements AfterContentInit, OnDestroy {
+  so: any;
+
+  constructor(private el: ElementRef) {}
+
+  ngAfterContentInit() {
+    this.so = ScrollOut({
+      scope: this.el.nativeElement
+    });
+  }
+
+  ngOnDestroy() {
+    this.so.teardown();
+  }
 }
 ```
 
@@ -87,69 +177,6 @@ Manually checks if the elements have been updated.  This is intended for when a 
 ### teardown()
 If you no longer need a ScrollOut instance, call the ```teardown()``` function:
 
-
-## Tips (How do I?...)
-
-### Force a CSS Animation to replay
-When using animate.css, you may need to force the animation to play a second time.  Luckily there is a handy way to force the browser to reflow the document and replay the animation:
-
-```js
-ScrollOut({
-  inClass: 'animated',
-  onVisible: function(el) {
-    // remove the class
-    el.classList.remove('animated');
-
-    // force reflow
-    void el.offsetWidth;
-
-    // re-add the animated cl
-    el.classList.add('animated');
-  }
-})
-```
-
-### Use ScrollOut with a JS Framework
-Most JS frameworks have setup/teardown methods that should be used when using ScrollOut.
-
-#### Vue
-```js
-export default {
-  data() {
-    return {
-      so: undefined
-    }
-  },
-  mounted() {
-    this.so = ScrollOut({
-      scope: this.$el
-    });
-  },
-  destroyed() {
-    this.so.teardown();
-  }
-})
-```
-
-#### Angular
-```ts
-@Component(/**/)
-export class MyComponent implements AfterContentInit, OnDestroy {
-  so: any;
-
-  constructor(private el: ElementRef) {}
-
-  ngAfterContentInit() {
-    this.so = ScrollOut({
-      scope: this.el.nativeElement
-    });
-  }
-
-  ngOnDestroy() {
-    this.so.teardown();
-  }
-}
-```
 
 ## License
 

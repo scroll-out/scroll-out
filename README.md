@@ -56,6 +56,8 @@ ScrollOut({ /* options */ })
 ```
 
 ## Options
+
+### Configuration
 |Options|Description|
 |:-|:-|
 |scope|The top level element.  By default this is document. A css selector can also be used, but only the first match will be watched|
@@ -64,11 +66,17 @@ ScrollOut({ /* options */ })
 |outClass|The class name to assign when the element is not in the viewport.  Default value is "scroll-out".|
 |once|Elements will only be changed from scroll-out to scroll-in once.  This is useful if you want to transition all elements exactly once.  The default value is false.|
 |delay|The amount of time in milliseconds to throttle detecting if elements are in view. By default this is 40 milliseconds.| 
+|offset|The targets become visible when they reach this distance in pixels from the top of the screen. Setting this option overrides all other collision detection|
+|threshold|The ratio of the element that must be visible before it is marked as visible. Providing the value 0.2 would require 20% of the element to be visible before marking it visible|
+
+### Events
+|Event|Description|
+|:-|:-|
 |onShown(element)|callback for when an element is show|
 |onHidden(element)|Callback for when an element is hidden|
 |onChange(element, visible)|Callback for when an element changes visibility|
 
-## Methods
+## ScrollOut Methods
 
 ### index()
 Manually searches for elements.  This is intended for when DOM elements are removed or inserted by a JS framework.
@@ -80,9 +88,9 @@ Manually checks if the elements have been updated.  This is intended for when a 
 If you no longer need a ScrollOut instance, call the ```teardown()``` function:
 
 
-## Tips
+## Tips (How do I?...)
 
-### Forcing a CSS Animation to replay
+### Force a CSS Animation to replay
 When using animate.css, you may need to force the animation to play a second time.  Luckily there is a handy way to force the browser to reflow the document and replay the animation:
 
 ```js
@@ -101,10 +109,10 @@ ScrollOut({
 })
 ```
 
-### Using ScrollOut with a JS Framework
+### Use ScrollOut with a JS Framework
 Most JS frameworks have setup/teardown methods that should be used when using ScrollOut.
 
-- In VueJS, you should use the mounted/destroyed methods:
+#### Vue
 ```js
 export default {
   data() {
@@ -123,7 +131,7 @@ export default {
 })
 ```
 
-- In Angular, you should use the ngAfterContentInit/ngOnDestroy methods:
+#### Angular
 ```ts
 @Component(/**/)
 export class MyComponent implements AfterContentInit, OnDestroy {

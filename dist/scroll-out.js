@@ -34,42 +34,42 @@ var main = function(opts) {
     var scope = $(opts.scope || doc)[0];
 
     // define locals
-    var lastCheck, lastScroll, timeout, elements, viewPortStart, viewPortEnd;
+    var lastCheck, lastViewStart, timeout, elements, viewStart, viewEnd;
 
     var index = function() {
         elements = $(targets, scope).reverse();
-        onScroll();
+        check();
     };
 
     var update = function() {
         timeout = 0;
 
         for (var i = elements.length - 1; i > -1; --i) {
-            var el = elements[i];
+            var element = elements[i];
 
             // figure out if visible
             var show = false;
             if (opts.offset) {
-                show = opts.offset <= viewPortStart;
+                show = opts.offset <= viewStart;
             } else {
-                var es = el.offsetTop;
-                var h = el.offsetHeight;
-                show = threshold < (clamp(es + h, viewPortStart, viewPortEnd) - clamp(es, viewPortStart, viewPortEnd)) / h;
+                var es = element.offsetTop;
+                var h = element.offsetHeight;
+                show = threshold < (clamp(es + h, viewStart, viewEnd) - clamp(es, viewStart, viewEnd)) / h;
             }
 
             // if last state is not the same, flip the classes
-            if (el._SO_ !== show) {
+            if (element._SO_ !== show) {
+                // set the new state. we do this on the element, so re-queries pick up the correct state
+                element._SO_ = show;
+
                 // set new state of class
-                el.classList.toggle(inClass, show);
-                el.classList.toggle(outClass, !show);
+                element.classList.toggle(inClass, show);
+                element.classList.toggle(outClass, !show);
 
                 // handle callbacks
-                (opts.onChange || noop)(el, show);
-                ((show ? opts.onShown : opts.onHidden) || noop)(el);
+                (opts.onChange || noop)(element, show);
+                ((show ? opts.onShown : opts.onHidden) || noop)(element); 
             }
-
-            // set the new state. we do this on the element, so re-queries pick up the correct state
-            el._SO_ = show;
 
             // if this is shown multiple times, put it back in the list
             if (show && opts.once) {
@@ -77,28 +77,24 @@ var main = function(opts) {
             }
         }
 
-        lastScroll = viewPortStart;
+        lastViewStart = viewStart;
     };
 
     var check = function() {
-        if (elements.length && lastScroll !== viewPortStart) {
+        viewEnd = (viewStart = doc.scrollTop) + doc.clientHeight;
+        if (elements.length && lastViewStart !== viewStart) {
             timeout = timeout || setTimeout(update, opts.delay || 40);
         }
-    };
-
-    var onScroll = function() {
-        viewPortEnd = (viewPortStart = doc.scrollTop) + doc.clientHeight;
-        check();
     };
 
     // run initialize index and check
     index();
 
     // hook up document listeners to automatically detect changes
-    var events = [[win, resize, index], [win, resize, onScroll], [win, scroll, onScroll]];
+    var events = [[resize, index], [resize, check], [scroll, check]];
 
     events.some(function(e) {
-        e[0].addEventListener(e[1], e[2]);
+        win.addEventListener(e[0], e[1]);
     });
 
     return {
@@ -106,7 +102,7 @@ var main = function(opts) {
         update: update,
         teardown: function() {
             events.some(function(e) {
-                e[0].removeEventListener(e[1], e[2]);
+                win.removeEventListener(e[0], [1]);
             });
         }
     };

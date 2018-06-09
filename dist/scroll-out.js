@@ -1,6 +1,8 @@
 var ScrollOut = (function () {
 'use strict';
 
+/** @type import('../types').IScrollOutOptions */
+
 var win = window;
 var doc = document.documentElement;
 var resize = "resize";
@@ -8,11 +10,22 @@ var scroll = "scroll";
 
 function noop() {}
 
+/**
+ * 
+ * @param {number} v 
+ * @param {number} min 
+ * @param {number} max 
+ */
 function clamp(v, min, max) {
     return min > v ? min : max < v ? max : v;
-}
+} 
 
-/** find elements */
+/** 
+ * find elements
+ * @param {Node | Node[] | NodeList | string} e
+ * @param {Node} param
+ * @returns {HTMLElement[]}
+ */
 function $(e, parent) {
     return !e || e.length == 0
         ? // null or empty string returns empty array
@@ -23,9 +36,13 @@ function $(e, parent) {
             : // selector and NodeList are converted to Element[]
               [].slice.call(e[0].nodeName ? e : (parent || doc).querySelectorAll(e));
 }
-
+/** 
+ * Creates a new instance of ScrollOut that marks elements in the viewport with an "in" class
+ * and marks elements outside of the viewport with an "out"
+ * @param {IScrollOutOptions} opts
+ */
 var main = function(opts) {
-    // set default options
+    // set default options 
     var opts = opts || {};
     var threshold = opts.threshold || 0;
     var inClass = opts.inClass || "scroll-in";
@@ -34,7 +51,10 @@ var main = function(opts) {
     var scope = $(opts.scope || doc)[0];
 
     // define locals
-    var lastCheck, lastViewStart, timeout, elements, viewStart, viewEnd;
+    var lastViewStart, timeout, viewStart, viewEnd;
+
+    /** @type {HTMLElement[]} */ 
+    var elements;
 
     var index = function() {
         elements = $(targets, scope).reverse();
@@ -63,8 +83,8 @@ var main = function(opts) {
                 element._SO_ = show;
 
                 // set new state of class
-                element.classList.toggle(inClass, show);
-                element.classList.toggle(outClass, !show);
+                element.classList.add(show ? inClass : outClass);
+                element.classList.remove(!show ? inClass : outClass);
 
                 // handle callbacks
                 (opts.onChange || noop)(element, show);

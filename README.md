@@ -4,6 +4,7 @@
 
 
 [![npm version](https://badge.fury.io/js/scroll-out.svg)](https://badge.fury.io/js/scroll-out) [![Downloads](https://img.shields.io/npm/dm/scroll-out.svg)](https://www.npmjs.com/package/scroll-out)
+[![gzip size](http://img.badgesize.io/https://unpkg.com/scroll-out/dist/scroll-out.min.js?compression=gzip&label=gzip%20size&style=flat&cache=false)](https://unpkg.com/scroll-out/dist/scroll-out.min.js) 
 
 ## Why should I use this?
 - Animate or reveal elements as they scroll into view using CSS or JavaScript

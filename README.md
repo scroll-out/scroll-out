@@ -45,7 +45,7 @@ When using animate.css, you may need to force the animation to play a second tim
 ```js
 ScrollOut({
   inClass: 'animated',
-  onVisible: function(el) {
+  onShown: function(el) {
     // remove the class
     el.classList.remove('animated');
 

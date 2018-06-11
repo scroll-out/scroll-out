@@ -37,7 +37,7 @@ Add this to your page to select ```.fade-in```
 ```html
 <script> 
 ScrollOut({
-    selector: '.fade-in'
+    targets: '.fade-in'
 }); 
 </script>
 ```

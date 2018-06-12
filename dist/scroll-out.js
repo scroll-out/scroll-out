@@ -3,6 +3,7 @@ var ScrollOut = (function () {
 
 /** @type import('../types').IScrollOutOptions */
 
+var _ = undefined;
 var win = window;
 var doc = document.documentElement;
 var resize = "resize";
@@ -45,9 +46,9 @@ var main = function(opts) {
     // set default options 
     var opts = opts || {};
     var threshold = opts.threshold || 0;
-    var inClass = opts.inClass || "scroll-in";
-    var outClass = opts.outClass || "scroll-out";
-    var targets = opts.targets || "." + inClass + ",." + outClass;
+    var inClass = opts.inClass || _;
+    var outClass = opts.outClass || _;
+    var targets = opts.targets || "[data-scroll]";
     var scope = $(opts.scope || doc)[0];
 
     // define locals
@@ -62,13 +63,14 @@ var main = function(opts) {
     };
 
     var update = function() {
-        timeout = 0;
+        timeout = _;
 
         for (var i = elements.length - 1; i > -1; --i) {
             var element = elements[i];
 
             // figure out if visible
-            var show = false;
+            /** @type {boolean} */
+            var show;
             if (opts.offset) {
                 show = opts.offset <= viewStart;
             } else {
@@ -77,10 +79,12 @@ var main = function(opts) {
                 show = threshold < (clamp(es + h, viewStart, viewEnd) - clamp(es, viewStart, viewEnd)) / h;
             }
 
-            // if last state is not the same, flip the classes
+            // if last state is not the same, flip the classes and state
+            // we use a local property because the lookup is a lot faster than a class or data attribute lookup
             if (element._SO_ !== show) {
                 // set the new state. we do this on the element, so re-queries pick up the correct state
                 element._SO_ = show;
+                element.setAttribute('data-scroll', show ? "in" : "out");
 
                 // set new state of class
                 element.classList.add(show ? inClass : outClass);

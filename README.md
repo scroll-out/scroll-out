@@ -13,22 +13,22 @@
 
 ## How do I use it?
 
-Install ScrollOut and decorate elements with the ```scroll-out``` class.  As elements become visible, ```scroll-out``` with be replaced with ```scroll-in``` and vice-versa.  Add your own CSS or JS to make a big impression when things come into view.  That's it!
+Install ScrollOut and decorate elements with the ```data-scroll``` attribute.  As elements become visible, ```data-scroll``` will be set to ```in``` and when elements are scrolled out they will be set with ```out```.  Add your own CSS or JS to make a big impression when things come into view.  That's it!
 
 ## Tips (How do I?...)
 
 ### Perform a Fade In with CSS
 
 
-Add these classes to your css
+Add this to your css.
 ```css
 .fade-in {
   transition: opacity 1s;
 }
-.fade-in.scroll-in {
+.fade-in[data-scroll="in"] {
   opacity: 1;
 }
-.fade-in.scroll-out {
+.fade-in[data-scroll="out"] {
   opacity: 0;
 }
 ```
@@ -36,9 +36,7 @@ Add these classes to your css
 Add this to your page to select ```.fade-in```
 ```html
 <script> 
-ScrollOut({
-    targets: '.fade-in'
-}); 
+ScrollOut(); 
 </script>
 ```
 
@@ -155,9 +153,9 @@ ScrollOut({ /* options */ })
 |Options|Description|
 |:-|:-|
 |scope|The top level element.  By default this is document. A css selector can also be used, but only the first match will be watched|
-|targets|An optional list of elements or a css selector.  By default, the the inClass and outClass are selected.|
-|inClass|The class name to assign when the element is in the viewport.  Default value is "scroll-in". To use with animate.css, assign this to "animated"|
-|outClass|The class name to assign when the element is not in the viewport.  Default value is "scroll-out".|
+|targets|An optional list of elements or a css selector.  By default, this is ```[data-scroll]```|
+|inClass|The class name to assign when the element is in the viewport. To use with animate.css, assign this to "animated"|
+|outClass|The class name to assign when the element is not in the viewport.|
 |once|Elements will only be changed from scroll-out to scroll-in once.  This is useful if you want to transition all elements exactly once.  The default value is false.|
 |delay|The amount of time in milliseconds to throttle detecting if elements are in view. By default this is 40 milliseconds.| 
 |offset|The targets become visible when they reach this distance in pixels from the top of the screen. Setting this option overrides all other collision detection|

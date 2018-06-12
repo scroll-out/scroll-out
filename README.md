@@ -33,11 +33,14 @@ Add these classes to your css
 }
 ```
 
-Add this to your page
+Add this to your page to select ```.fade-in```
 ```html
-<script> ScrollOut(); </script>
+<script> 
+ScrollOut({
+    targets: '.fade-in'
+}); 
+</script>
 ```
-
 
 ### Force a CSS Animation to replay
 When using animate.css, you may need to force the animation to play a second time.  Luckily there is a handy way to force the browser to reflow the document and replay the animation:
@@ -45,7 +48,7 @@ When using animate.css, you may need to force the animation to play a second tim
 ```js
 ScrollOut({
   inClass: 'animated',
-  onVisible: function(el) {
+  onShown: function(el) {
     // remove the class
     el.classList.remove('animated');
 

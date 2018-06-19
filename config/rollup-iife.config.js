@@ -1,6 +1,9 @@
-module.exports = {
-  entry: 'src/main.js',
-  dest: 'dist/scroll-out.js',
-  format: 'iife',
-  moduleName: 'ScrollOut'
+import size from 'rollup-plugin-filesize';
+import babelMinify from 'rollup-plugin-babel-minify';
+
+export default {
+  entry: 'src/main.js', 
+  output: [
+    { file: 'dist/scroll-out.js', name: 'ScrollOut', format: 'iife' }
+  ]
 }

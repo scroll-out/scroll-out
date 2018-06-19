@@ -1,10 +1,9 @@
 /** @type import('../types').IScrollOutOptions */
 
-var _ = undefined;
+var _ = void 0;
 var win = window;
-var doc = document.documentElement;
-var resize = "resize";
-var scroll = "scroll";
+var doc = document.documentElement; 
+var PREFIX = 'data-scroll';
 
 function noop() {}
 
@@ -41,91 +40,100 @@ function $(e, parent) {
  */
 export default function(opts) {
     // set default options 
-    var opts = opts || {};
-    var threshold = opts.threshold || 0;
+    opts = opts || {};
     var inClass = opts.inClass || _;
     var outClass = opts.outClass || _;
-    var targets = opts.targets || "[data-scroll]";
-    var scope = $(opts.scope || doc)[0];
 
     // define locals
-    var lastViewStart, timeout, viewStart, viewEnd;
+    var timeout, current;
 
     /** @type {HTMLElement[]} */ 
     var elements;
 
-    var index = function() {
-        elements = $(targets, scope).reverse();
+    function isVisible(es, h) {
+        return opts.offset 
+            ? opts.offset <= viewStart 
+            : (opts.threshold || 0) < (clamp(es + h, current.x0, current.x1) - clamp(es, current.x0, current.x1)) / h;   
+    }
+
+    function index() {
+        elements = $(opts.targets || "[" + PREFIX + "]", $(opts.scope || doc)[0]);
         check();
     };
 
-    var update = function() {
+    function attr(el, name, value) {
+        el.setAttribute(name, value);
+    }
+
+    function update() {
         timeout = _;
+        // calculate new dimensions
+        var next = {
+            x0: win.pageYOffset || doc.scrollTop,
+            x1: viewStart + doc.clientHeight
+        } 
 
-        for (var i = elements.length - 1; i > -1; --i) {
-            var element = elements[i];
+        var yDir = current && next.x0 < current.x0;
 
+        // escape if nothing has changed
+        if (!elements.length || (!current || (current.x0 === next.x0 && current.x1 === next.x1))) {
+            return;
+        }
+
+        // save the current data for comparison
+        current = next;
+
+        // mark the browser with the current direction
+        if (doc._SOYD_ !== yDir) {
+            doc._SOYD_ = yDir;
+            attr(doc, PREFIX + '-dir-y', yDir ? 1: -1);
+        }
+
+        elements = elements.filter(function(element) {
             // figure out if visible
-            /** @type {boolean} */
-            var show;
-            if (opts.offset) {
-                show = opts.offset <= viewStart;
-            } else {
-                var es = element.offsetTop;
-                var h = element.offsetHeight;
-                show = threshold < (clamp(es + h, viewStart, viewEnd) - clamp(es, viewStart, viewEnd)) / h;
-            }
+            var show = isVisible(next, element);
 
             // if last state is not the same, flip the classes and state
             // we use a local property because the lookup is a lot faster than a class or data attribute lookup
             if (element._SO_ !== show) {
                 // set the new state. we do this on the element, so re-queries pick up the correct state
                 element._SO_ = show;
-                element.setAttribute('data-scroll', show ? "in" : "out");
+                attr(el, PREFIX, show ? "in" : "out");
 
                 // set new state of class
-                element.classList.add(show ? inClass : outClass);
-                element.classList.remove(!show ? inClass : outClass);
+                var clAdd = show ? inClass : outClass;
+                clAdd && element.classList.add(clAdd);
+
+                var clRemove = !show ? inClass : outClass;
+                clRemove && element.classList.remove(clRemove);
 
                 // handle callbacks
-                (opts.onChange || noop)(element, show);
+                (opts.onChange || noop)(element, show, isReversed);
                 ((show ? opts.onShown : opts.onHidden) || noop)(element); 
             }
 
             // if this is shown multiple times, put it back in the list
-            if (show && opts.once) {
-                elements.splice(i, 1);
-            }
-        }
-
-        lastViewStart = viewStart;
+            return !(show && opts.once);
+        })
     };
 
-    var check = function() {
-        viewStart = win.pageYOffset || doc.scrollTop;
-        viewEnd = viewStart + doc.clientHeight;
-        if (elements.length && lastViewStart !== viewStart) {
-            timeout = timeout || setTimeout(update, opts.delay || 40);
-        }
+    function check() {
+        timeout || (timeout = setTimeout(update, opts.delay || 16));
     };
 
     // run initialize index and check
     index();
 
-    // hook up document listeners to automatically detect changes
-    var events = [[resize, index], [resize, check], [scroll, check]];
-
-    events.some(function(e) {
-        win.addEventListener(e[0], e[1]);
-    });
+    // hook up document listeners to automatically detect changes 
+    win.addEventListener('resize', index);
+    doc.addEventListener('scroll', check);
 
     return {
         index: index,
         update: update,
         teardown: function() {
-            events.some(function(e) {
-                win.removeEventListener(e[0], [1]);
-            });
+            win.removeEventListener('resize', index);
+            doc.removeEventListener('scroll', check);
         }
     };
 }

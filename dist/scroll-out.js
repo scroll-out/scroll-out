@@ -65,6 +65,12 @@ var ScrollOut = (function () {
                   [].slice.call(e[0].nodeName ? e : (parent || root).querySelectorAll(e));
     }
 
+    function sample(samples, n) {
+        samples.push(n);
+        samples.length > 80 && samples.shift();
+        return 2 * samples.reduce(sum, 0) / samples.length;
+    }
+
     /**
      * Defers execution and handles all calls to this function in a frame all at once.
      * This is used to prevent ping-pong read/writes to the browser while still maintaining
@@ -119,13 +125,8 @@ var ScrollOut = (function () {
         var elements;
 
         var position = [0, 0];
-        var samples = [];
-
-        function sample(n) {
-            samples.push(n);
-            samples.length > 40 && samples.shift();
-            return 2 * samples.reduce(sum, 0) / samples.length;
-        }
+        var samplesX = [];
+        var samplesY = [];
 
         function index() {
             elements = $(opts.targets || "[data-scroll]", $(opts.scope || doc)[0]);
@@ -144,8 +145,8 @@ var ScrollOut = (function () {
                 var ch = doc.clientHeight;
                 var directionX = sign(cx - position[0]);
                 var directionY = sign(cy - position[1]);
-                var averageX = sample(directionX);
-                var averageY = sample(directionY);
+                var averageX = sample(samplesX, directionX);
+                var averageY = sample(samplesY, directionY);
 
                 // save the current data for comparison
                 position = [cx, cy];

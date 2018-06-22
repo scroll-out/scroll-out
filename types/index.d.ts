@@ -9,8 +9,7 @@ declare interface IScrollOutOptions {
    targets?: Node | NodeList | Node[] | string;
    inClass?: string;
    outClass?: string;
-   once?: false;
-   delay?: number;
+   once?: false; 
    offset?: number;
    threshold?: number;
 }

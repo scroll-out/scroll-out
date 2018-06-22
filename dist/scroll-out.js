@@ -5,22 +5,50 @@ var ScrollOut = (function () {
 
     var _ = void 0;
     var win = window;
-    var doc = document.documentElement; 
-    var PREFIX = 'data-scroll';
+    var root = document.documentElement;
+    var SCROLL = "scroll";
+    var RESIZE = "resize";
+    var SCROLL_DIR = "scroll-dir-";
+    var SCROLL_DIR_AVERAGE = "scroll-avg";
+    var PERCENT_VISIBLE = "percent-visible-";
+    var X = "x";
+    var Y = "y";
 
     function noop() {}
 
+    function sum(c, n) {
+        return c + n;
+    }
+
     /**
-     * 
-     * @param {number} v 
-     * @param {number} min 
-     * @param {number} max 
+     * @param {number} x
+     */
+    function sign(x) {
+        return (x > 0) - (x < 0) || +x;
+    }
+
+    /**
+     *
+     * @param {number} v
+     * @param {number} min
+     * @param {number} max
      */
     function clamp(v, min, max) {
         return min > v ? min : max < v ? max : v;
-    } 
+    }
 
-    /** 
+    /**
+     *
+     * @param {number} p0
+     * @param {number} s0
+     * @param {number} p1
+     * @param {number} s1
+     */
+    function getRatio(p0, s0, p1, s1) {
+        return (clamp(p0 + s0, p1, p1 + s1) - clamp(p0, p1, p1 + s1)) / s0;
+    }
+
+    /**
      * find elements
      * @param {Node | Node[] | NodeList | string} e
      * @param {Node} param
@@ -34,106 +62,159 @@ var ScrollOut = (function () {
                 ? // a single element is wrapped in an array
                   [e]
                 : // selector and NodeList are converted to Element[]
-                  [].slice.call(e[0].nodeName ? e : (parent || doc).querySelectorAll(e));
+                  [].slice.call(e[0].nodeName ? e : (parent || root).querySelectorAll(e));
     }
-    /** 
+
+    /**
+     * Defers execution and handles all calls to this function in a frame all at once.
+     * This is used to prevent ping-pong read/writes to the browser while still maintaining
+     * code that looks like setAttribute and setProperty are being called in place.
+     * @param {Function} fn
+     */
+    function queued(fn) {
+        if (fn) {
+            var id, queue;
+
+            var clearQueue = function() {
+                id = queue.some(function(q) {
+                    fn.apply(_, q);
+                });
+            };
+
+            return function() {
+                id = id || ((queue = []) && requestAnimationFrame(clearQueue));
+                queue.push(arguments);
+            };
+        }
+        return noop;
+    }
+
+    var setAttr = queued(function(el, name, value) {
+        el.setAttribute("data-" + name, value);
+    });
+
+    var setVar = queued(function(el, name, value) {
+        el.style.setProperty("--" + name, value);
+    });
+
+    /**
      * Creates a new instance of ScrollOut that marks elements in the viewport with an "in" class
      * and marks elements outside of the viewport with an "out"
      * @param {IScrollOutOptions} opts
      */
     function main(opts) {
-        // set default options 
+        // set default options
         opts = opts || {};
-        var inClass = opts.inClass || _;
-        var outClass = opts.outClass || _;
+        var change = queued(opts.onChange);
+        var hidden = queued(opts.onHidden);
+        var shown = queued(opts.onShown);
+        var vars = queued(window.CSS && CSS.supports("--", 0) && setVar);
+
+        var container = $(opts.scrollingElement || win)[0];
+        var doc = $(opts.scrollingElement || root)[0];
 
         // define locals
-        var timeout, current;
-
-        /** @type {HTMLElement[]} */ 
+        var timeout;
+        /** @type {HTMLElement[]} */
         var elements;
 
-        function isVisible(es, h) {
-            return opts.offset 
-                ? opts.offset <= viewStart 
-                : (opts.threshold || 0) < (clamp(es + h, current.x0, current.x1) - clamp(es, current.x0, current.x1)) / h;   
+        var position = [0, 0];
+        var samples = [];
+
+        function sample(n) {
+            samples.push(n);
+            samples.length > 20 && samples.shift();
+            return samples.reduce(sum, 0) / samples.length;
         }
 
         function index() {
-            elements = $(opts.targets || "[" + PREFIX + "]", $(opts.scope || doc)[0]);
-            check();
-        }
-        function attr(el, name, value) {
-            el.setAttribute(name, value);
+            elements = $(opts.targets || "[data-scroll]", $(opts.scope || doc)[0]);
+            update();
         }
 
         function update() {
-            timeout = _;
-            // calculate new dimensions
-            var next = {
-                x0: win.pageYOffset || doc.scrollTop,
-                x1: viewStart + doc.clientHeight
-            }; 
+            // prettier-ignore
+            timeout = timeout || setTimeout(function() {
+                timeout = _;
 
-            var yDir = current && next.x0 < current.x0;
+                // calculate position, direction and ratio
+                var cx = doc.scrollLeft || win.pageXOffset;
+                var cy = doc.scrollTop || win.pageYOffset;
+                var cw = doc.clientWidth;
+                var ch = doc.clientHeight;
+                var directionX = sign(cx - position[0]);
+                var directionY = sign(cy - position[1]);
+                var averageX = sample(directionX);
+                var averageY = sample(directionY);
 
-            // escape if nothing has changed
-            if (!elements.length || (!current || (current.x0 === next.x0 && current.x1 === next.x1))) {
-                return;
-            }
+                // save the current data for comparison
+                position = [cx, cy];
 
-            // save the current data for comparison
-            current = next;
+                // mark the browser with the current direction
+                setAttr(doc, SCROLL_DIR + X, directionX);
+                setAttr(doc, SCROLL_DIR + Y, directionY);
+                vars(doc, SCROLL_DIR + X, directionX);
+                vars(doc, SCROLL_DIR_AVERAGE + X, averageX);
+                vars(doc, SCROLL_DIR + Y, directionY);
+                vars(doc, SCROLL_DIR_AVERAGE + Y, averageY);
 
-            // mark the browser with the current direction
-            if (doc._SOYD_ !== yDir) {
-                doc._SOYD_ = yDir;
-                attr(doc, PREFIX + '-dir-y', yDir ? 1: -1);
-            }
+                elements = elements.filter(function(element) {         
+                    // get element dimensions
+                    var x = element.offsetLeft;
+                    var w = element.clientWidth;
+                    var y = element.offsetTop;
+                    var h = element.clientHeight;
 
-            elements = elements.filter(function(element) {
-                // figure out if visible
-                var show = isVisible(next, element);
+                    // find visible ratios for each element
+                    var visibleX = getRatio(x, w, cx, cw);
+                    var visibleY = getRatio(y, h, cy, ch);
 
-                // if last state is not the same, flip the classes and state
-                // we use a local property because the lookup is a lot faster than a class or data attribute lookup
-                if (element._SO_ !== show) {
+                    // identify if this is visible "enough"
+                    var visible = opts.offset 
+                        ? opts.offset <= cy 
+                        : (opts.threshold || 0) < visibleX * visibleY;
+
                     // set the new state. we do this on the element, so re-queries pick up the correct state
-                    element._SO_ = show;
-                    attr(el, PREFIX, show ? "in" : "out");
+                    setAttr(element, SCROLL, visible ? "in" : "out");
 
-                    // set new state of class
-                    var clAdd = show ? inClass : outClass;
-                    clAdd && element.classList.add(clAdd);
-
-                    var clRemove = !show ? inClass : outClass;
-                    clRemove && element.classList.remove(clRemove);
+                    // create context for callbacks
+                    var ctx = {
+                        visible: visible,
+                        visibleX: visibleX,
+                        visibleY: visibleY
+                    };
 
                     // handle callbacks
-                    (opts.onChange || noop)(element, show, isReversed);
-                    ((show ? opts.onShown : opts.onHidden) || noop)(element); 
-                }
+                    change(element, ctx, doc);
+                    (visible ? shown : hidden)(element, ctx, doc);
 
-                // if this is shown multiple times, put it back in the list
-                return !(show && opts.once);
-            });
+                    // set 
+                    vars(element, PERCENT_VISIBLE + X, visibleX);
+                    vars(element, PERCENT_VISIBLE + Y, visibleY);
+
+                    // if this is shown multiple times, put it back in the list
+                    return !(visible && opts.once);
+                });
+            }, 17);
         }
-        function check() {
-            timeout || (timeout = setTimeout(update, opts.delay || 16));
-        }
+
         // run initialize index and check
         index();
 
-        // hook up document listeners to automatically detect changes 
-        win.addEventListener('resize', index);
-        doc.addEventListener('scroll', check);
+        // hook up document listeners to automatically detect changes
+        var events = [{ $: win, f: index, e: RESIZE }, { $: container, f: update, e: SCROLL }];
+
+        events.some(function(o) {
+            o.$.addEventListener(o.e, o.f);
+        });
 
         return {
             index: index,
             update: update,
             teardown: function() {
-                win.removeEventListener('resize', index);
-                doc.removeEventListener('scroll', check);
+                events.some(function(o) {
+                    o.$.removeEventListener(o.e, o.f);
+                });
             }
         };
     }

@@ -21,7 +21,7 @@ function sum(c, n) {
  * @param {number} x
  */
 function sign(x) {
-    return (x > 0) - (x < 0) || +x;
+    return (x > 0) - (x < 0);
 }
 
 /**
@@ -120,8 +120,8 @@ export default function(opts) {
 
     function sample(n) {
         samples.push(n);
-        samples.length > 20 && samples.shift();
-        return samples.reduce(sum, 0) / samples.length;
+        samples.length > 40 && samples.shift();
+        return 2 * samples.reduce(sum, 0) / samples.length;
     }
 
     function index() {

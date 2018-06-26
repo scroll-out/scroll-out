@@ -24,8 +24,9 @@ export default function(opts) {
     var onShown = enqueue(opts.onShown);
     var props = opts.cssProps ? setProps : noop;
     
-    var container = $(opts.scrollingElement || win)[0];
-    var doc = $(opts.scrollingElement || root)[0];
+    var se = opts.scrollingElement;
+    var container = se ? $(se)[0] : win;
+    var doc = se ? $(se)[0] : root;
     var id = ++lastId;
 
     var changeAndDetect = function(obj, key, value) {

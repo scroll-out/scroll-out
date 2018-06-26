@@ -18,11 +18,7 @@
   "output": {
     "semicolons": false
   },
-  "mangle": {
-    "reserved": [
-      "_"
-    ]
-  },
+  "mangle": true,
   "toplevel": false,
   "ie8": false
 }

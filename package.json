@@ -20,7 +20,7 @@
   "author": "Christopher Wallis <christopher.j.wallis@gmail.com> (http://notoriousb1t.com)",
   "license": "MIT",
   "devDependencies": {
-    "del-cli": "^1.1.0",
+    "del-cli": "^1.1.0", 
     "rollup": "^0.60.7",
     "rollup-plugin-babel-minify": "^5.0.0",
     "rollup-plugin-filesize": "^2.0.0",

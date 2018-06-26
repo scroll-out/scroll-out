@@ -1,131 +1,122 @@
-/** @type import('../types').IScrollOutOptions */
+import { throttle } from "./utils/throttle";
+import { enqueue } from "./utils/enqueue";
+import { sign, getRatio } from "./utils/math";
+import { $, setAttrs, setProps, win, root } from "./utils/dom";
+import { noop } from "./utils/noop";
 
-var _ = undefined;
-var win = window;
-var doc = document.documentElement;
-var resize = "resize";
-var scroll = "scroll";
-
-function noop() {}
+var SCROLL = "scroll";
+var RESIZE = "resize";
+var ON = "addEventListener";
+var OFF = "removeEventListener";
+var lastId = 0;
 
 /**
- * 
- * @param {number} v 
- * @param {number} min 
- * @param {number} max 
- */
-function clamp(v, min, max) {
-    return min > v ? min : max < v ? max : v;
-} 
-
-/** 
- * find elements
- * @param {Node | Node[] | NodeList | string} e
- * @param {Node} param
- * @returns {HTMLElement[]}
- */
-function $(e, parent) {
-    return !e || e.length == 0
-        ? // null or empty string returns empty array
-          []
-        : e.nodeName
-            ? // a single element is wrapped in an array
-              [e]
-            : // selector and NodeList are converted to Element[]
-              [].slice.call(e[0].nodeName ? e : (parent || doc).querySelectorAll(e));
-}
-/** 
  * Creates a new instance of ScrollOut that marks elements in the viewport with an "in" class
  * and marks elements outside of the viewport with an "out"
  * @param {IScrollOutOptions} opts
  */
 export default function(opts) {
-    // set default options 
-    var opts = opts || {};
-    var threshold = opts.threshold || 0;
-    var inClass = opts.inClass || _;
-    var outClass = opts.outClass || _;
-    var targets = opts.targets || "[data-scroll]";
-    var scope = $(opts.scope || doc)[0];
+    // set default options
+    opts = opts || {};
 
-    // define locals
-    var lastViewStart, timeout, viewStart, viewEnd;
+    var onChange = enqueue(opts.onChange);
+    var onHidden = enqueue(opts.onHidden);
+    var onShown = enqueue(opts.onShown);
+    var props = opts.cssProps ? setProps : noop;
+    
+    var container = $(opts.scrollingElement || win)[0];
+    var doc = $(opts.scrollingElement || root)[0];
+    var id = ++lastId;
 
-    /** @type {HTMLElement[]} */ 
-    var elements;
-
-    var index = function() {
-        elements = $(targets, scope).reverse();
-        check();
+    var changeAndDetect = function(obj, key, value) {
+        return obj[key + id] != (obj[key + id] = value);
     };
 
-    var update = function() {
-        timeout = _;
+    /** @type {HTMLElement[]} */
+    var elements, isResized;
+    var index = throttle(function() {
+        isResized = 1;
+        elements = $(opts.targets || "[data-scroll]", $(opts.scope || doc)[0]);
+        update();
+    });
 
-        for (var i = elements.length - 1; i > -1; --i) {
-            var element = elements[i];
+    var cx, cy;
+    var update = throttle(function() {
+        // calculate position, direction and ratio
+        var cw = doc.clientWidth;
+        var ch = doc.clientHeight;
 
-            // figure out if visible
-            /** @type {boolean} */
-            var show;
-            if (opts.offset) {
-                show = opts.offset <= viewStart;
-            } else {
-                var es = element.offsetTop;
-                var h = element.offsetHeight;
-                show = threshold < (clamp(es + h, viewStart, viewEnd) - clamp(es, viewStart, viewEnd)) / h;
-            }
+        var dirX = sign(-cx + (cx = doc.scrollLeft || win.pageXOffset));
+        var dirY = sign(-cy + (cy = doc.scrollTop || win.pageYOffset));
 
-            // if last state is not the same, flip the classes and state
-            // we use a local property because the lookup is a lot faster than a class or data attribute lookup
-            if (element._SO_ !== show) {
-                // set the new state. we do this on the element, so re-queries pick up the correct state
-                element._SO_ = show;
-                element.setAttribute('data-scroll', show ? "in" : "out");
-
-                // set new state of class
-                element.classList.add(show ? inClass : outClass);
-                element.classList.remove(!show ? inClass : outClass);
-
-                // handle callbacks
-                (opts.onChange || noop)(element, show);
-                ((show ? opts.onShown : opts.onHidden) || noop)(element); 
-            }
-
-            // if this is shown multiple times, put it back in the list
-            if (show && opts.once) {
-                elements.splice(i, 1);
-            }
+        // call update to dom
+        if (dirX | dirY && changeAndDetect(doc, "_sd", dirX | dirY)) {
+            var ctx = {
+                scrollDirX: dirX,
+                scrollDirY: dirY
+            };
+            setAttrs(doc, ctx);
+            props(doc, ctx);
         }
 
-        lastViewStart = viewStart;
-    };
+        elements = elements.filter(function(el) {
+            // get element dimensions
+            var x = el.offsetLeft;
+            var y = el.offsetTop;
+            var w = el.clientWidth;
+            var h = el.clientHeight;
 
-    var check = function() {
-        viewStart = win.pageYOffset || doc.scrollTop;
-        viewEnd = viewStart + doc.clientHeight;
-        if (elements.length && lastViewStart !== viewStart) {
-            timeout = timeout || setTimeout(update, opts.delay || 40);
-        }
-    };
+            // find visible ratios for each element
+            var visibleX = getRatio(x, w, cx, cw);
+            var visibleY = getRatio(y, h, cy, ch);
 
-    // run initialize index and check
+            var ctx = {
+                visibleX: visibleX,
+                visibleY: visibleY,
+                offsetX: x,
+                offsetY: y,
+                elementWidth: w,
+                elementHeight: h
+            };
+
+            // identify if this is visible "enough"
+            var visible = ctx.visible = +(opts.offset ? opts.offset <= cy : (opts.threshold || 0) < visibleX * visibleY)
+
+            if (changeAndDetect(el, "_sv", visibleX + visibleY + visible) || isResized) { 
+                // if percentage visibility has changed, update
+                props(el, ctx);
+            }
+
+            // handle callbacks
+            if (changeAndDetect(el, "_so", visible)) {
+                setAttrs(el, {
+                    scroll: visible ? "in" : "out"
+                });
+
+                onChange(el, ctx, doc);
+                (visible ? onShown : onHidden)(el, ctx, doc);
+            }
+
+            // if this is shown multiple times, keep it in the list
+            return !visible || !opts.once;
+        });
+
+        isResized = 0;
+    });
+
+    // run initialize index
     index();
 
     // hook up document listeners to automatically detect changes
-    var events = [[resize, index], [resize, check], [scroll, check]];
-
-    events.some(function(e) {
-        win.addEventListener(e[0], e[1]);
-    });
+    win[ON](RESIZE, index);
+    container[ON](SCROLL, update);
 
     return {
         index: index,
         update: update,
         teardown: function() {
-            events.some(function(e) {
-                win.removeEventListener(e[0], [1]);
-            });
+            win[OFF](RESIZE, index);
+            container[OFF](SCROLL, update);
         }
     };
 }

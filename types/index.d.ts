@@ -6,12 +6,12 @@ declare global {
 
 declare interface IScrollOutOptions {
    scope?: Node | string;
-   targets?: Node | NodeList | Node[] | string;
-   inClass?: string;
-   outClass?: string;
+   scrollingElement?: Node | string;
+   targets?: Node | NodeList | Node[] | string; 
    once?: false; 
    offset?: number;
    threshold?: number;
+   cssProps?: boolean;
 }
 
 declare function ScrollOut(options: IScrollOutOptions): ScrollOut;

@@ -1,4 +1,5 @@
 import { enqueue } from './enqueue';
+import { hyphenate } from './strings';
 
 export var win = window;
 export var root = document.documentElement; 
@@ -20,10 +21,14 @@ export function $(e, parent) {
               [].slice.call(e[0].nodeName ? e : (parent || root).querySelectorAll(e));
 }
 
-export var setAttr = enqueue(function(el, name, value) {
-  el.setAttribute("data-" + name, value);
+export var setAttrs = enqueue(function(el, attrs) {
+  for (var key in attrs) {
+    el.setAttribute("data-" + hyphenate(key), attrs[key]);
+  }
 });
 
-export var setProp = enqueue(function(el, name, value) {
-  el.style.setProperty("--" + name, value);
+export var setProps = enqueue(function(el, props) {
+  for (var key in props) {
+    el.style.setProperty("--" + hyphenate(key), props[key]);
+  }
 });

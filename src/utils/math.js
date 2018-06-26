@@ -1,11 +1,4 @@
 /**
- * @param {number} x
- */
-export function sign(x) {
-    return (x > 0) - (x < 0);
-}
-
-/**
  *
  * @param {number} v
  * @param {number} min
@@ -24,4 +17,11 @@ export function clamp(v, min, max) {
  */
 export function getRatio(p0, s0, p1, s1) {
     return (clamp(p0 + s0, p1, p1 + s1) - clamp(p0, p1, p1 + s1)) / s0;
+}
+
+/**
+ * @param {number} x
+ */
+export function sign(x) {
+    return (x > 0) - (x < 0);
 }

@@ -13,7 +13,7 @@ export function enqueue(fn) {
         var clearQueue = function() {
             id = 0;
             queue.some(function(q) {
-                fn.apply(null, q);
+                fn.apply(0, q);
             });
         };
 

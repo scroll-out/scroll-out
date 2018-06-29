@@ -58,17 +58,6 @@ var ScrollOut = (function () {
     }
 
     /**
-     *
-     * @param {number} p0
-     * @param {number} s0
-     * @param {number} p1
-     * @param {number} s1
-     */
-    function getRatio(p0, s0, p1, s1) {
-        return (clamp(p0 + s0, p1, p1 + s1) - clamp(p0, p1, p1 + s1)) / s0;
-    }
-
-    /**
      * @param {number} x
      */
     function sign(x) {
@@ -179,9 +168,9 @@ var ScrollOut = (function () {
                 var w = el.clientWidth;
                 var h = el.clientHeight;
 
-                // find visible ratios for each element
-                var visibleX = getRatio(x, w, cx, cw);
-                var visibleY = getRatio(y, h, cy, ch);
+                // find visible ratios for each element 
+                var visibleX = (clamp(x + w, cx, cx + cw) - clamp(x, cx, cx + cw)) / w;
+                var visibleY = (clamp(y + h, cy, cy + ch) - clamp(y, cy, cy + ch)) / h; 
 
                 var ctx = {
                     visibleX: visibleX,
@@ -189,7 +178,9 @@ var ScrollOut = (function () {
                     offsetX: x,
                     offsetY: y,
                     elementWidth: w,
-                    elementHeight: h
+                    elementHeight: h,
+                    intersectX: visibleX == 1 ? 0 : sign(x - cx),
+                    intersectY: visibleY == 1 ? 0 : sign(y - cy)
                 };
 
                 // identify if this is visible "enough"

@@ -1,14 +1,14 @@
 # Changelog
 All notable changes to this project will be documented in this file.  More specifically, breaking API changes will be noted here
 
-## [2.0.0] - 2018-06-??
+## [2.0.0] - 2018-06-25
 ### Added
 
 - added "scrollingElement" option to target specific non-window scroll containers
 - add compatibility guard for CSS variables
-- add css vars for direction of scroll on scroll container (--scroll-dir-x, --scroll-dir-y)
-- add css vars for scroll-container average direction  (--scroll-avg-x, --scroll-avg-y)
-- add css vars for percent visible to elements (--percent-visible-x, --percent-visible-y)
+- add css vars for direction of scroll on scroll container (--scroll-dir-x, --scroll-dir-y) 
+- add css vars for percent visible to elements (--visible-x, --visible-y)
+- add css vars for dimensions to elements (--element-width, --element-height)
 
 ### Optimizations
 

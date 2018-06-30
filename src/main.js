@@ -1,6 +1,6 @@
 import { throttle } from "./utils/throttle";
 import { enqueue } from "./utils/enqueue";
-import { sign, getRatio } from "./utils/math";
+import { sign, clamp } from "./utils/math";
 import { $, setAttrs, setProps, win, root } from "./utils/dom";
 import { noop } from "./utils/noop";
 
@@ -19,7 +19,7 @@ export default function(opts) {
     // set default options
     opts = opts || {};
 
-    var onChange = enqueue(opts.onChange);
+    var onChange = enqueue(opts.onChange);v
     var onHidden = enqueue(opts.onHidden);
     var onShown = enqueue(opts.onShown);
     var props = opts.cssProps ? setProps : noop;
@@ -67,9 +67,9 @@ export default function(opts) {
             var w = el.clientWidth;
             var h = el.clientHeight;
 
-            // find visible ratios for each element
-            var visibleX = getRatio(x, w, cx, cw);
-            var visibleY = getRatio(y, h, cy, ch);
+            // find visible ratios for each element 
+            var visibleX = (clamp(x + w, cx, cx + cw) - clamp(x, cx, cx + cw)) / w;
+            var visibleY = (clamp(y + h, cy, cy + ch) - clamp(y, cy, cy + ch)) / h; 
 
             var ctx = {
                 visibleX: visibleX,
@@ -77,7 +77,9 @@ export default function(opts) {
                 offsetX: x,
                 offsetY: y,
                 elementWidth: w,
-                elementHeight: h
+                elementHeight: h,
+                intersectX: visibleX == 1 ? 0 : sign(x - cx),
+                intersectY: visibleY == 1 ? 0 : sign(y - cy)
             };
 
             // identify if this is visible "enough"

@@ -1,6 +1,12 @@
 # Changelog
 All notable changes to this project will be documented in this file.  More specifically, breaking API changes will be noted here
 
+## [2.1.0] - 2018-06-28
+### Added 
+
+- added ```--intersect-x``` and ```--intersect-y``` CSS variables to signify whether the element is intersecting the start or end of the viewport.
+
+
 ## [2.0.0] - 2018-06-25
 ### Added
 

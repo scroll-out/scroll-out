@@ -7,7 +7,7 @@
 
 ## Why should I use this?
 - Animate or reveal elements as they scroll into view using CSS or JavaScript
-- Super tiny JavaScript library at 1KB minified.
+- Super tiny JavaScript library at 1KB minified and gzipped.
 - Free for commercial and non-commercial use under the MIT license.
 
 ## How do I use it?

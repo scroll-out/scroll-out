@@ -19,7 +19,7 @@ export default function(opts) {
     // set default options
     opts = opts || {};
 
-    var onChange = enqueue(opts.onChange);
+    var onChange = enqueue(opts.onChange);v
     var onHidden = enqueue(opts.onHidden);
     var onShown = enqueue(opts.onShown);
     var props = opts.cssProps ? setProps : noop;

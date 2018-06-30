@@ -1,5 +1,6 @@
 import { enqueue } from './enqueue';
 import { hyphenate } from './strings';
+import { round } from './math';
 
 export var win = window;
 export var root = document.documentElement; 
@@ -29,6 +30,6 @@ export var setAttrs = enqueue(function(el, attrs) {
 
 export var setProps = enqueue(function(el, props) {
   for (var key in props) {
-    el.style.setProperty("--" + hyphenate(key), props[key]);
+    el.style.setProperty("--" + hyphenate(key), round(props[key]));
   }
 });

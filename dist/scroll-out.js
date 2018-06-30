@@ -64,6 +64,13 @@ var ScrollOut = (function () {
         return (x > 0) - (x < 0);
     }
 
+    /**
+     * @param {number} n
+     */
+    function round(n) {
+        return Math.round(n * 10000) / 10000;
+    }
+
     var cache = {};
     function hyphenate(value) {
         return cache[value] ||(cache[value] = value.replace(/([A-Z])/g, replacer));
@@ -101,7 +108,7 @@ var ScrollOut = (function () {
 
     var setProps = enqueue(function(el, props) {
       for (var key in props) {
-        el.style.setProperty("--" + hyphenate(key), props[key]);
+        el.style.setProperty("--" + hyphenate(key), round(props[key]));
       }
     });
 
@@ -120,8 +127,7 @@ var ScrollOut = (function () {
         // set default options
         opts = opts || {};
 
-        var onChange = enqueue(opts.onChange);
-        var onHidden = enqueue(opts.onHidden);
+        var onChange = enqueue(opts.onChange);    var onHidden = enqueue(opts.onHidden);
         var onShown = enqueue(opts.onShown);
         var props = opts.cssProps ? setProps : noop;
         

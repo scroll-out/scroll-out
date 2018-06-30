@@ -14,3 +14,10 @@ export function clamp(v, min, max) {
 export function sign(x) {
     return (x > 0) - (x < 0);
 }
+
+/**
+ * @param {number} n
+ */
+export function round(n) {
+    return Math.round(n * 10000) / 10000;
+}

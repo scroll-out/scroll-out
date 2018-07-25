@@ -18,6 +18,10 @@ Install ScrollOut and decorate elements with the ```data-scroll``` attribute.  A
 
 Check out the [documentation](https://scroll-out.github.io/).
 
+## Compatibility
+
+The core features are compatible on all modern desktop and mobile browsers.  Internet Explorer 11 is also supported.
+
 ## License
 
 scroll-out is licensed under the [MIT license](http://opensource.org/licenses/MIT).

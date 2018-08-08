@@ -4,7 +4,7 @@ declare global {
     }
 }
 
-declare interface IScrollOutOptions {
+export interface IScrollOutOptions {
    scope?: Node | string;
    scrollingElement?: Node | string;
    targets?: Node | NodeList | Node[] | string; 
@@ -12,11 +12,16 @@ declare interface IScrollOutOptions {
    offset?: number;
    threshold?: number;
    cssProps?: boolean;
+   onChange?: Function;
+   onHidden?: Function;
+   onShown?: Function;
 }
 
-declare function ScrollOut(options: IScrollOutOptions): ScrollOut;
+export interface ScrollOut {
+    (options: IScrollOutOptions): ScrollOut;
+}
 
-declare interface ScrollOut {
+export interface ScrollOut {
     index(): void;
     update(): void;
     teardown(): void;

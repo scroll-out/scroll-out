@@ -3,6 +3,7 @@ import { enqueue } from "./utils/enqueue";
 import { sign, clamp } from "./utils/math";
 import { $, setAttrs, setProps, win, root } from "./utils/dom";
 import { noop } from "./utils/noop";
+import { IScrollOutOptions } from "./types";
 
 var SCROLL = "scroll";
 var RESIZE = "resize";
@@ -12,14 +13,13 @@ var lastId = 0;
 
 /**
  * Creates a new instance of ScrollOut that marks elements in the viewport with an "in" class
- * and marks elements outside of the viewport with an "out"
- * @param {IScrollOutOptions} opts
+ * and marks elements outside of the viewport with an "out" 
  */
-export default function(opts) {
+export default function(opts: IScrollOutOptions) {
     // set default options
     opts = opts || {};
 
-    var onChange = enqueue(opts.onChange);v
+    var onChange = enqueue(opts.onChange);
     var onHidden = enqueue(opts.onHidden);
     var onShown = enqueue(opts.onShown);
     var props = opts.cssProps ? setProps : noop;
@@ -32,9 +32,8 @@ export default function(opts) {
     var changeAndDetect = function(obj, key, value) {
         return obj[key + id] != (obj[key + id] = value);
     };
-
-    /** @type {HTMLElement[]} */
-    var elements, isResized;
+ 
+    var elements: HTMLElement[], isResized: 1 | 0;
     var index = throttle(function() {
         isResized = 1;
         elements = $(opts.targets || "[data-scroll]", $(opts.scope || doc)[0]);
@@ -74,6 +73,7 @@ export default function(opts) {
             var ctx = {
                 visibleX: visibleX,
                 visibleY: visibleY,
+                visible: 0,
                 offsetX: x,
                 offsetY: y,
                 elementWidth: w,

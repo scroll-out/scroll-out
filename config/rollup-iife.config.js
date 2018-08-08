@@ -1,9 +1,13 @@
-import size from 'rollup-plugin-filesize';
-import babelMinify from 'rollup-plugin-babel-minify';
+import typescript2 from 'rollup-plugin-typescript2'
 
 export default {
-  entry: 'src/main.js', 
+  entry: 'src/main.ts', 
   output: [
     { file: 'dist/scroll-out.js', name: 'ScrollOut', format: 'iife' }
+  ],
+  plugins: [
+    typescript2({
+      typescript: require('typescript')
+    })
   ]
 }

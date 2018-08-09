@@ -84,7 +84,7 @@ var ScrollOut = (function () {
   var setProps = function (cssProps) {
       return enqueue(function (el, props) {
           for (var key in props) {
-              if (cssProps == true || key in cssProps) {
+              if (cssProps == true || cssProps[key]) {
                   el.style.setProperty("--" + hyphenate(key), round(props[key]));
               }
           }

@@ -32,7 +32,7 @@ export var setAttrs = enqueue(function(el, attrs) {
 export var setProps = function(cssProps: true | CSSPropOptions) {
   return enqueue(function(el, props) {
     for (var key in props) {
-      if (cssProps == true || key in cssProps) {
+      if (cssProps == true || cssProps[key]) {
         el.style.setProperty("--" + hyphenate(key), round(props[key]));
       }
     }

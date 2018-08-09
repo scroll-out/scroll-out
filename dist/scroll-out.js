@@ -81,11 +81,15 @@ var ScrollOut = (function () {
           el.setAttribute("data-" + hyphenate(key), attrs[key]);
       }
   });
-  var setProps = enqueue(function (el, props) {
-      for (var key in props) {
-          el.style.setProperty("--" + hyphenate(key), round(props[key]));
-      }
-  });
+  var setProps = function (cssProps) {
+      return enqueue(function (el, props) {
+          for (var key in props) {
+              if (cssProps == true || key in cssProps) {
+                  el.style.setProperty("--" + hyphenate(key), round(props[key]));
+              }
+          }
+      });
+  };
 
   var SCROLL = "scroll";
   var RESIZE = "resize";
@@ -102,7 +106,7 @@ var ScrollOut = (function () {
       var onChange = enqueue(opts.onChange);
       var onHidden = enqueue(opts.onHidden);
       var onShown = enqueue(opts.onShown);
-      var props = opts.cssProps ? setProps : noop;
+      var props = opts.cssProps ? setProps(opts.cssProps) : noop;
       var se = opts.scrollingElement;
       var container = se ? $(se)[0] : win;
       var doc = se ? $(se)[0] : root;

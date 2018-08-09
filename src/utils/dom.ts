@@ -1,6 +1,7 @@
 import { enqueue } from "./enqueue";
 import { hyphenate } from "./strings";
 import { round } from "./math";
+import { CSSPropOptions } from "../types";
 
 export var win = window;
 export var root = document.documentElement;
@@ -28,8 +29,12 @@ export var setAttrs = enqueue(function(el, attrs) {
   }
 });
 
-export var setProps = enqueue(function(el, props) {
-  for (var key in props) {
-    el.style.setProperty("--" + hyphenate(key), round(props[key]));
-  }
-});
+export var setProps = function(cssProps: true | CSSPropOptions) {
+  return enqueue(function(el, props) {
+    for (var key in props) {
+      if (cssProps == true || key in cssProps) {
+        el.style.setProperty("--" + hyphenate(key), round(props[key]));
+      }
+    }
+  });
+}

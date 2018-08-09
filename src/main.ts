@@ -22,7 +22,7 @@ export default function(opts: IScrollOutOptions) {
     var onChange = enqueue(opts.onChange);
     var onHidden = enqueue(opts.onHidden);
     var onShown = enqueue(opts.onShown);
-    var props = opts.cssProps ? setProps : noop;
+    var props = opts.cssProps ? setProps(opts.cssProps) : noop;
     
     var se = opts.scrollingElement;
     var container = se ? $(se)[0] : win;

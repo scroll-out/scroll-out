@@ -6,23 +6,23 @@ import { noop } from "./noop";
  * code that looks like setAttribute and setProperty are being called in place.
  */
 export function enqueue<T extends Function>(fn: T): T {
-  if (fn) {
-    var id, queue;
+    if (fn) {
+        let id: number, queue: IArguments[];
 
-    var clearQueue = function() {
-      id = 0;
-      queue.some(function(q) {
-        fn.apply(0, q);
-      });
-    };
+        const clearQueue = function() {
+            id = 0;
+            queue.forEach(q => {
+                fn.apply(0, q);
+            });
+        };
 
-    return (function() {
-      if (!id) {
-        queue = [];
-        id = requestAnimationFrame(clearQueue);
-      }
-      queue.push(arguments);
-    } as any) as T;
-  }
-  return (noop as any) as T;
+        return (function() {
+            if (!id) {
+                queue = [];
+                id = requestAnimationFrame(clearQueue);
+            }
+            queue.push(arguments);
+        } as any) as T;
+    }
+    return (noop as any) as T;
 }

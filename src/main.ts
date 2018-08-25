@@ -33,9 +33,8 @@ export default function(opts: IScrollOutOptions) {
         return obj[key + id] != (obj[key + id] = JSON.stringify(value));
     };
 
-    let elements: HTMLElement[], isResized: 1 | 0;
+    let elements: HTMLElement[] = []; 
     const index = throttle(function() {
-        isResized = 1;
         elements = $(opts.targets || "[data-scroll]", $(opts.scope || doc)[0]);
         update();
     });
@@ -116,8 +115,6 @@ export default function(opts: IScrollOutOptions) {
             // if this is shown multiple times, keep it in the list
             return !visible || !opts.once;
         });
-
-        isResized = 0;
     });
 
     // run initialize index

@@ -30,7 +30,7 @@ export default function(opts: IScrollOutOptions) {
     const id = ++lastId;
 
     const changeAndDetect = (obj, key, value) => {
-        return obj[key + id] != (obj[key + id] = value);
+        return obj[key + id] != (obj[key + id] = JSON.stringify(value));
     };
 
     let elements: HTMLElement[], isResized: 1 | 0;
@@ -51,17 +51,19 @@ export default function(opts: IScrollOutOptions) {
         const scrollPercentY = doc.scrollTop / (doc.scrollHeight - ch || 1);
 
         // call update to dom
-        if (dirX | dirY && changeAndDetect(doc, "_sd", (dirX | dirY) + scrollPercentX + scrollPercentY)) {
+        const pCtx = {
+            scrollDirX: dirX,
+            scrollDirY: dirY,
+            scrollPercentX: scrollPercentX,
+            scrollPercentY: scrollPercentY
+        }
+
+        if (dirX | dirY && changeAndDetect(doc, "_S", pCtx)) {
             setAttrs(doc, {
                 scrollDirX: dirX,
                 scrollDirY: dirY
             });
-            props(doc, {
-                scrollDirX: dirX,
-                scrollDirY: dirY,
-                scrollPercentX: scrollPercentX,
-                scrollPercentY: scrollPercentY
-            });
+            props(doc, pCtx);
         }
 
         elements = elements.filter(el => {
@@ -73,18 +75,22 @@ export default function(opts: IScrollOutOptions) {
 
             // find visible ratios for each element
             const visibleX = (clamp(x + w, cx, cx + cw) - clamp(x, cx, cx + cw)) / w;
-            const visibleY = (clamp(y + h, cy, cy + ch) - clamp(y, cy, cy + ch)) / h;
+            const visibleY = (clamp(y + h, cy, cy + ch) - clamp(y, cy, cy + ch)) / h; 
+            var viewportX = clamp((cx - (((w / 2) + x) - (cw / 2))) / (cw / 2), -1, 1);
+            var viewportY = clamp((cy - (((h / 2) + y) - (ch / 2))) / (ch / 2), -1, 1); 
 
             const ctx = {
-                visibleX: visibleX,
-                visibleY: visibleY,
-                visible: 0,
+                elementHeight: h,
+                elementWidth: w,
+                intersectX: visibleX == 1 ? 0 : sign(x - cx),
+                intersectY: visibleY == 1 ? 0 : sign(y - cy),
                 offsetX: x,
                 offsetY: y,
-                elementWidth: w,
-                elementHeight: h,
-                intersectX: visibleX == 1 ? 0 : sign(x - cx),
-                intersectY: visibleY == 1 ? 0 : sign(y - cy)
+                viewportX: viewportX,
+                viewportY: viewportY,
+                visible: 0,
+                visibleX: visibleX,
+                visibleY: visibleY
             };
 
             // identify if this is visible "enough"
@@ -92,13 +98,13 @@ export default function(opts: IScrollOutOptions) {
                 ? opts.offset <= cy
                 : (opts.threshold || 0) < visibleX * visibleY));
 
-            if (changeAndDetect(el, "_sv", visibleX + visibleY + visible) || isResized) {
+            if (changeAndDetect(el, "_SO", ctx)) {
                 // if percentage visibility has changed, update
                 props(el, ctx);
             }
 
             // handle callbacks
-            if (changeAndDetect(el, "_so", visible)) {
+            if (changeAndDetect(el, "_SV", visible)) {
                 setAttrs(el, {
                     scroll: visible ? "in" : "out"
                 });

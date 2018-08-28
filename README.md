@@ -22,6 +22,13 @@ Check out the [documentation](https://scroll-out.github.io/).
 
 The core features are compatible on all modern desktop and mobile browsers.  Internet Explorer 11 is also supported.
 
+## Maintainers
+
+| Maintainer | GitHub | Twitter |
+| :- | :- | :- |
+| Christopher Wallis | [@notoriousb1t](https://github.com/notoriousb1t) | [@notoriousb1t](https://twitter.com/notoriousb1t) |
+| Stephen Shaw | [@shshaw](https://github.com/shshaw) | [@shshaw](https://twitter.com/shshaw) |
+
 ## License
 
 scroll-out is licensed under the [MIT license](http://opensource.org/licenses/MIT).

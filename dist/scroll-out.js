@@ -1,48 +1,37 @@
 var ScrollOut = (function () {
     'use strict';
 
-    function throttle(fn) {
-        var lastId;
-        var time = Date.now();
+    function noop() { }
+
+    var clearTask;
+    var actions = [];
+    var subscribers = [];
+    function subscribe(fn) {
+        subscribers.push(fn);
+        clearTask || loop();
         return function () {
-            if (time + 17 - Date.now() < 0) {
-                lastId = 0;
-                time = Date.now();
-                fn();
-            }
-            else {
-                // ensure that if there is a skipped action, that it will fire
-                // if the timeout occurs and no other actions occur
-                lastId = lastId || setTimeout(fn, 17);
+            subscribers = subscribers.filter(function (s) { return s != fn; });
+            if (!subscribers.length && clearTask) {
+                cancelAnimationFrame(clearTask);
             }
         };
     }
-
-    function noop() { }
-
-    /**
-     * Defers execution and handles all calls to this function in a frame all at once.
-     * This is used to prevent ping-pong read/writes to the browser while still maintaining
-     * code that looks like setAttribute and setProperty are being called in place.
-     */
+    function loop() {
+        // process subscribers
+        var s = subscribers.slice();
+        s.forEach(function (s2) { return s2(); });
+        // process actions collected
+        var next = actions;
+        actions = [];
+        next.forEach(function (q) { return q.f.apply(0, q.a); });
+        // schedule next loop if the queue needs it
+        clearTask = subscribers.length ? requestAnimationFrame(loop) : 0;
+    }
     function enqueue(fn) {
-        if (fn) {
-            var id_1, queue_1;
-            var clearQueue_1 = function () {
-                id_1 = 0;
-                queue_1.forEach(function (q) {
-                    fn.apply(0, q);
-                });
-            };
-            return function () {
-                if (!id_1) {
-                    queue_1 = [];
-                    id_1 = requestAnimationFrame(clearQueue_1);
-                }
-                queue_1.push(arguments);
-            };
-        }
-        return noop;
+        fn = fn || noop;
+        return function () {
+            fn.apply(0, arguments);
+        };
     }
 
     function clamp(v, min, max) {
@@ -114,13 +103,14 @@ var ScrollOut = (function () {
         var changeAndDetect = function (obj, key, value) {
             return obj[key + id] != (obj[key + id] = JSON.stringify(value));
         };
+        var rootCtx;
         var elements;
-        var index = throttle(function () {
-            elements = $(opts.targets || "[data-scroll]", $(opts.scope || doc)[0]);
-            update();
-        });
+        var shouldIndex;
+        var index = function () {
+            shouldIndex = true;
+        };
         var cx, cy;
-        var update = throttle(function () {
+        var update = function () {
             // calculate position, direction and ratio
             var cw = doc.clientWidth;
             var ch = doc.clientHeight;
@@ -129,20 +119,23 @@ var ScrollOut = (function () {
             var scrollPercentX = doc.scrollLeft / (doc.scrollWidth - cw || 1);
             var scrollPercentY = doc.scrollTop / (doc.scrollHeight - ch || 1);
             // call update to dom
-            var pCtx = {
+            rootCtx = {
                 scrollDirX: dirX,
                 scrollDirY: dirY,
                 scrollPercentX: scrollPercentX,
                 scrollPercentY: scrollPercentY
             };
-            if (dirX | dirY && changeAndDetect(doc, "_S", pCtx)) {
-                setAttrs(doc, {
-                    scrollDirX: dirX,
-                    scrollDirY: dirY
+            if (shouldIndex) {
+                shouldIndex = false;
+                elements = $(opts.targets || "[data-scroll]", $(opts.scope || doc)[0]).map(function (el) {
+                    return {
+                        $: el,
+                        ctx: {}
+                    };
                 });
-                props(doc, pCtx);
             }
-            elements = elements.filter(function (el) {
+            elements.forEach(function (obj) {
+                var el = obj.$;
                 // get element dimensions
                 var x = el.offsetLeft;
                 var y = el.offsetTop;
@@ -153,7 +146,7 @@ var ScrollOut = (function () {
                 var visibleY = (clamp(y + h, cy, cy + ch) - clamp(y, cy, cy + ch)) / h;
                 var viewportX = clamp((cx - (((w / 2) + x) - (cw / 2))) / (cw / 2), -1, 1);
                 var viewportY = clamp((cy - (((h / 2) + y) - (ch / 2))) / (ch / 2), -1, 1);
-                var ctx = {
+                obj.ctx = {
                     elementHeight: h,
                     elementWidth: w,
                     intersectX: visibleX == 1 ? 0 : sign(x - cx),
@@ -162,14 +155,31 @@ var ScrollOut = (function () {
                     offsetY: y,
                     viewportX: viewportX,
                     viewportY: viewportY,
-                    visible: 0,
                     visibleX: visibleX,
-                    visibleY: visibleY
+                    visibleY: visibleY,
+                    visible: +(opts.offset
+                        ? opts.offset <= cy
+                        : (opts.threshold || 0) < visibleX * visibleY)
                 };
-                // identify if this is visible "enough"
-                var visible = (ctx.visible = +(opts.offset
-                    ? opts.offset <= cy
-                    : (opts.threshold || 0) < visibleX * visibleY));
+            });
+        };
+        var sub = subscribe(function () {
+            if (!elements) {
+                return;
+            }
+            if (changeAndDetect(doc, "_S", rootCtx)) {
+                setAttrs(doc, {
+                    scrollDirX: rootCtx.scrollDirX,
+                    scrollDirY: rootCtx.scrollDirY
+                });
+                props(doc, rootCtx);
+            }
+            var len = elements.length;
+            for (var x = len - 1; x > -1; x--) {
+                var obj = elements[x];
+                var el = obj.$;
+                var ctx = obj.ctx;
+                var visible = ctx.visible;
                 if (changeAndDetect(el, "_SO", ctx)) {
                     // if percentage visibility has changed, update
                     props(el, ctx);
@@ -183,8 +193,10 @@ var ScrollOut = (function () {
                     (visible ? onShown : onHidden)(el, ctx, doc);
                 }
                 // if this is shown multiple times, keep it in the list
-                return !visible || !opts.once;
-            });
+                if (visible && opts.once) {
+                    elements.splice(x, 1);
+                }
+            }
         });
         // run initialize index
         index();
@@ -195,6 +207,7 @@ var ScrollOut = (function () {
             index: index,
             update: update,
             teardown: function () {
+                sub();
                 win[OFF](RESIZE, index);
                 container[OFF](SCROLL, update);
             }

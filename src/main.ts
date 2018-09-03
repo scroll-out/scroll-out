@@ -1,5 +1,4 @@
-import { throttle } from "./utils/throttle";
-import { enqueue } from "./utils/enqueue";
+import { enqueue, subscribe } from "./utils/enqueue";
 import { sign, clamp } from "./utils/math";
 import { $, setAttrs, setProps, win, root } from "./utils/dom";
 import { noop } from "./utils/noop";
@@ -33,14 +32,15 @@ export default function(opts: IScrollOutOptions) {
         return obj[key + id] != (obj[key + id] = JSON.stringify(value));
     };
 
-    let elements: HTMLElement[] = []; 
-    const index = throttle(function() {
-        elements = $(opts.targets || "[data-scroll]", $(opts.scope || doc)[0]);
-        update();
-    });
+    let rootCtx: Record<string, number>;
+    let elements: { $: HTMLElement, ctx: Record<string, any> }[];
+    let shouldIndex: boolean;
+    const index = () => { 
+        shouldIndex = true;
+    }
 
     let cx: number, cy: number;
-    const update = throttle(() => {
+    const update = () => {
         // calculate position, direction and ratio
         const cw = doc.clientWidth;
         const ch = doc.clientHeight;
@@ -50,22 +50,25 @@ export default function(opts: IScrollOutOptions) {
         const scrollPercentY = doc.scrollTop / (doc.scrollHeight - ch || 1);
 
         // call update to dom
-        const pCtx = {
+        rootCtx = {
             scrollDirX: dirX,
             scrollDirY: dirY,
             scrollPercentX: scrollPercentX,
             scrollPercentY: scrollPercentY
         }
 
-        if (dirX | dirY && changeAndDetect(doc, "_S", pCtx)) {
-            setAttrs(doc, {
-                scrollDirX: dirX,
-                scrollDirY: dirY
-            });
-            props(doc, pCtx);
+        if (shouldIndex) {
+            shouldIndex = false;
+            elements = $(opts.targets || "[data-scroll]", $(opts.scope || doc)[0]).map(el => {
+                return {
+                    $: el,
+                    ctx: {}
+                }
+            })
         }
 
-        elements = elements.filter(el => {
+        elements.forEach(obj => {
+            const el = obj.$;
             // get element dimensions
             const x = el.offsetLeft;
             const y = el.offsetTop;
@@ -78,7 +81,7 @@ export default function(opts: IScrollOutOptions) {
             var viewportX = clamp((cx - (((w / 2) + x) - (cw / 2))) / (cw / 2), -1, 1);
             var viewportY = clamp((cy - (((h / 2) + y) - (ch / 2))) / (ch / 2), -1, 1); 
 
-            const ctx = {
+            obj.ctx = {
                 elementHeight: h,
                 elementWidth: w,
                 intersectX: visibleX == 1 ? 0 : sign(x - cx),
@@ -86,16 +89,34 @@ export default function(opts: IScrollOutOptions) {
                 offsetX: x,
                 offsetY: y,
                 viewportX: viewportX,
-                viewportY: viewportY,
-                visible: 0,
+                viewportY: viewportY, 
                 visibleX: visibleX,
-                visibleY: visibleY
+                visibleY: visibleY,
+                visible: +(opts.offset
+                    ? opts.offset <= cy
+                    : (opts.threshold || 0) < visibleX * visibleY)
             };
+        });
+    };
 
-            // identify if this is visible "enough"
-            const visible = (ctx.visible = +(opts.offset
-                ? opts.offset <= cy
-                : (opts.threshold || 0) < visibleX * visibleY));
+    const sub = subscribe(function() { 
+        if (!elements) {
+            return;
+        }
+
+        if (changeAndDetect(doc, "_S", rootCtx)) {
+            setAttrs(doc, {
+                scrollDirX: rootCtx.scrollDirX,
+                scrollDirY: rootCtx.scrollDirY
+            });
+            props(doc, rootCtx);
+        }
+        const len = elements.length;
+        for (let x = len - 1; x > -1; x--) {
+            const obj = elements[x]; 
+            const el = obj.$;
+            const ctx = obj.ctx;
+            const visible = ctx.visible;
 
             if (changeAndDetect(el, "_SO", ctx)) {
                 // if percentage visibility has changed, update
@@ -113,8 +134,10 @@ export default function(opts: IScrollOutOptions) {
             }
 
             // if this is shown multiple times, keep it in the list
-            return !visible || !opts.once;
-        });
+            if (visible && opts.once) {
+                elements.splice(x, 1);
+            }
+        }
     });
 
     // run initialize index
@@ -128,6 +151,7 @@ export default function(opts: IScrollOutOptions) {
         index: index,
         update: update,
         teardown() {
+            sub();
             win[OFF](RESIZE, index);
             container[OFF](SCROLL, update);
         }

@@ -5,3 +5,4 @@
 config/
 node_modules/
 src/
+.rpt2_cache

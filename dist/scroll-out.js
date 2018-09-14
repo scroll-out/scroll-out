@@ -80,10 +80,10 @@ var ScrollOut = (function () {
         });
     };
 
-    var SCROLL = "scroll";
-    var RESIZE = "resize";
-    var ON = "addEventListener";
-    var OFF = "removeEventListener";
+    var SCROLL = 'scroll';
+    var RESIZE = 'resize';
+    var ON = 'addEventListener';
+    var OFF = 'removeEventListener';
     var lastId = 0;
     /**
      * Creates a new instance of ScrollOut that marks elements in the viewport with an "in" class
@@ -127,7 +127,7 @@ var ScrollOut = (function () {
             };
             if (shouldIndex) {
                 shouldIndex = false;
-                elements = $(opts.targets || "[data-scroll]", $(opts.scope || doc)[0]).map(function (el) {
+                elements = $(opts.targets || '[data-scroll]', $(opts.scope || doc)[0]).map(function (el) {
                     return {
                         $: el,
                         ctx: {}
@@ -144,8 +144,8 @@ var ScrollOut = (function () {
                 // find visible ratios for each element
                 var visibleX = (clamp(x + w, cx, cx + cw) - clamp(x, cx, cx + cw)) / w;
                 var visibleY = (clamp(y + h, cy, cy + ch) - clamp(y, cy, cy + ch)) / h;
-                var viewportX = clamp((cx - (((w / 2) + x) - (cw / 2))) / (cw / 2), -1, 1);
-                var viewportY = clamp((cy - (((h / 2) + y) - (ch / 2))) / (ch / 2), -1, 1);
+                var viewportX = clamp((cx - (w / 2 + x - cw / 2)) / (cw / 2), -1, 1);
+                var viewportY = clamp((cy - (h / 2 + y - ch / 2)) / (ch / 2), -1, 1);
                 obj.ctx = {
                     elementHeight: h,
                     elementWidth: w,
@@ -157,17 +157,15 @@ var ScrollOut = (function () {
                     viewportY: viewportY,
                     visibleX: visibleX,
                     visibleY: visibleY,
-                    visible: +(opts.offset
-                        ? opts.offset <= cy
-                        : (opts.threshold || 0) < visibleX * visibleY)
+                    visible: +(opts.offset ? opts.offset <= cy : (opts.threshold || 0) < visibleX * visibleY)
                 };
             });
         };
-        var sub = subscribe(function () {
+        var render = function () {
             if (!elements) {
                 return;
             }
-            if (changeAndDetect(doc, "_S", rootCtx)) {
+            if (changeAndDetect(doc, '_S', rootCtx)) {
                 setAttrs(doc, {
                     scrollDirX: rootCtx.scrollDirX,
                     scrollDirY: rootCtx.scrollDirY
@@ -180,14 +178,14 @@ var ScrollOut = (function () {
                 var el = obj.$;
                 var ctx = obj.ctx;
                 var visible = ctx.visible;
-                if (changeAndDetect(el, "_SO", ctx)) {
+                if (changeAndDetect(el, '_SO', ctx)) {
                     // if percentage visibility has changed, update
                     props(el, ctx);
                 }
                 // handle callbacks
-                if (changeAndDetect(el, "_SV", visible)) {
+                if (changeAndDetect(el, '_SV', visible)) {
                     setAttrs(el, {
-                        scroll: visible ? "in" : "out"
+                        scroll: visible ? 'in' : 'out'
                     });
                     onChange(el, ctx, doc);
                     (visible ? onShown : onHidden)(el, ctx, doc);
@@ -197,9 +195,11 @@ var ScrollOut = (function () {
                     elements.splice(x, 1);
                 }
             }
-        });
+        };
+        var sub = subscribe(render);
         // run initialize index
         index();
+        render();
         // hook up document listeners to automatically detect changes
         win[ON](RESIZE, index);
         container[ON](SCROLL, update);

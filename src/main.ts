@@ -142,7 +142,7 @@ export default function(opts: IScrollOutOptions) {
 
 	// run initialize index
 	index();
-	render();
+	update();
 
 	// hook up document listeners to automatically detect changes
 	win[ON](RESIZE, index);

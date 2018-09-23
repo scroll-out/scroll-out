@@ -136,9 +136,16 @@ var ScrollOut = (function () {
             }
             elements.forEach(function (obj) {
                 var el = obj.$;
+                // find the distance from the element to the scrolling container
+                var target = el;
+                var x = 0;
+                var y = 0;
+                do {
+                    x += target.offsetLeft;
+                    y += target.offsetTop;
+                    target = target.offsetParent;
+                } while (target && target != container);
                 // get element dimensions
-                var x = el.offsetLeft;
-                var y = el.offsetTop;
                 var w = el.clientWidth;
                 var h = el.clientHeight;
                 // find visible ratios for each element

@@ -69,9 +69,19 @@ export default function(opts: IScrollOutOptions) {
 
 		elements.forEach((obj) => {
 			const el = obj.$;
+
+			// find the distance from the element to the scrolling container
+			let target = el;
+			let x = 0;
+			let y = 0;
+			do {
+				x += target.offsetLeft;
+				y += target.offsetTop;
+				target = target.offsetParent as HTMLElement;
+			}
+			while (target && target != container);
+
 			// get element dimensions
-			const x = el.offsetLeft;
-			const y = el.offsetTop;
 			const w = el.clientWidth;
 			const h = el.clientHeight;
 

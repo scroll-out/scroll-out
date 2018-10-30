@@ -10,6 +10,7 @@ export function subscribe(fn) {
     return function() {
         subscribers = subscribers.filter(s => s != fn);
         if (!subscribers.length && clearTask) {
+            clearTask = 0;
             cancelAnimationFrame(clearTask);
         }
     };

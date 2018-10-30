@@ -12,6 +12,7 @@ var ScrollOut = (function () {
         return function () {
             subscribers = subscribers.filter(function (s) { return s != fn; });
             if (!subscribers.length && clearTask) {
+                clearTask = 0;
                 cancelAnimationFrame(clearTask);
             }
         };

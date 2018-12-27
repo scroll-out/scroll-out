@@ -1,8 +1,8 @@
-import { enqueue, subscribe } from './utils/enqueue';
-import { sign, clamp } from './utils/math';
-import { $, setAttrs, setProps, win, root } from './utils/dom';
-import { noop } from './utils/noop';
-import { IScrollOutOptions } from './types';
+import {IScrollOutOptions} from './types';
+import {$, root, setAttrs, setProps, win} from './utils/dom';
+import {subscribe} from './utils/loop';
+import {clamp, sign} from './utils/math';
+import {noop} from './utils/noop';
 
 const SCROLL = 'scroll';
 const RESIZE = 'resize';
@@ -11,160 +11,161 @@ const OFF = 'removeEventListener';
 let lastId = 0;
 
 /**
- * Creates a new instance of ScrollOut that marks elements in the viewport with an "in" class
- * and marks elements outside of the viewport with an "out"
+ * Creates a new instance of ScrollOut that marks elements in the viewport with
+ * an "in" class and marks elements outside of the viewport with an "out"
  */
+// tslint:disable-next-line:no-default-export
 export default function(opts: IScrollOutOptions) {
-	// set default options
-	opts = opts || {};
+  // Apply default options.
+  opts = opts || {};
 
-	const onChange = enqueue(opts.onChange);
-	const onHidden = enqueue(opts.onHidden);
-	const onShown = enqueue(opts.onShown);
-	const props = opts.cssProps ? setProps(opts.cssProps) : noop;
+  // Debounce onChange/onHidden/onShown.
+  const onChange = opts.onChange || noop;
+  const onHidden = opts.onHidden || noop;
+  const onShown = opts.onShown || noop;
+  const props = opts.cssProps ? setProps(opts.cssProps) : noop;
 
-	const se = opts.scrollingElement;
-	const container = se ? $(se)[0] : win;
-	const doc = se ? $(se)[0] : root;
-	const id = ++lastId;
+  const se = opts.scrollingElement;
+  const container = se ? $(se)[0] : win;
+  const doc = se ? $(se)[0] : root;
+  const id = ++lastId;
 
-	const changeAndDetect = (obj, key, value) => {
-		return obj[key + id] != (obj[key + id] = JSON.stringify(value));
-	};
+  const changeAndDetect = (obj, key, value) => {
+    return obj[key + id] !== (obj[key + id] = JSON.stringify(value));
+  };
 
-	let rootCtx: Record<string, number>;
-	let elements: { $: HTMLElement; ctx: Record<string, any> }[];
-	let shouldIndex: boolean;
-	const index = () => {
-		shouldIndex = true;
-	};
+  let rootCtx: Record<string, number>;
+  // tslint:disable-next-line:no-any
+  let elements: Array<{$: HTMLElement; ctx: Record<string, any>}>;
+  let shouldIndex: boolean;
+  const index = () => {
+    shouldIndex = true;
+  };
 
-	let cx: number, cy: number;
-	const update = () => {
-		// calculate position, direction and ratio
-		const cw = doc.clientWidth;
-		const ch = doc.clientHeight;
-		const dirX = sign(-cx + (cx = doc.scrollLeft || win.pageXOffset));
-		const dirY = sign(-cy + (cy = doc.scrollTop || win.pageYOffset));
-		const scrollPercentX = doc.scrollLeft / (doc.scrollWidth - cw || 1);
-		const scrollPercentY = doc.scrollTop / (doc.scrollHeight - ch || 1);
+  let cx: number, cy: number;
+  const update = () => {
+    if (shouldIndex) {
+      shouldIndex = false;
+      elements = $(opts.targets || '[data-scroll]', $(opts.scope || doc)[0])
+                     .map(el => ({$: el, ctx: {}}));
+    }
 
-		// call update to dom
-		rootCtx = {
-			scrollDirX: dirX,
-			scrollDirY: dirY,
-			scrollPercentX: scrollPercentX,
-			scrollPercentY: scrollPercentY
-		};
+    // Calculate position, direction and ratio.
+    const cw = doc.clientWidth;
+    const ch = doc.clientHeight;
+    const dirX = sign(-cx + (cx = doc.scrollLeft || win.pageXOffset));
+    const dirY = sign(-cy + (cy = doc.scrollTop || win.pageYOffset));
+    const scrollPercentX = doc.scrollLeft / (doc.scrollWidth - cw || 1);
+    const scrollPercentY = doc.scrollTop / (doc.scrollHeight - ch || 1);
 
-		if (shouldIndex) {
-			shouldIndex = false;
-			elements = $(opts.targets || '[data-scroll]', $(opts.scope || doc)[0]).map((el) => {
-				return {
-					$: el,
-					ctx: {}
-				};
-			});
-		}
+    // Call update to dom.
+    rootCtx =
+        {scrollDirX: dirX, scrollDirY: dirY, scrollPercentX, scrollPercentY};
 
-		elements.forEach((obj) => {
-			const el = obj.$;
+    elements.forEach(obj => {
+      const el = obj.$;
 
-			// find the distance from the element to the scrolling container
-			let target = el;
-			let x = 0;
-			let y = 0;
-			do {
-				x += target.offsetLeft;
-				y += target.offsetTop;
-				target = target.offsetParent as HTMLElement;
-			}
-			while (target && target != container);
+      // find the distance from the element to the scrolling container
+      let target = el;
+      let x = 0;
+      let y = 0;
+      do {
+        x += target.offsetLeft;
+        y += target.offsetTop;
+        target = target.offsetParent as HTMLElement;
+      } while (target && target !== container);
 
-			// get element dimensions
-			const w = el.clientWidth;
-			const h = el.clientHeight;
+      // Get element dimensions.
+      const w = el.clientWidth;
+      const h = el.clientHeight;
 
-			// find visible ratios for each element
-			const visibleX = (clamp(x + w, cx, cx + cw) - clamp(x, cx, cx + cw)) / w;
-			const visibleY = (clamp(y + h, cy, cy + ch) - clamp(y, cy, cy + ch)) / h;
-			var viewportX = clamp((cx - (w / 2 + x - cw / 2)) / (cw / 2), -1, 1);
-			var viewportY = clamp((cy - (h / 2 + y - ch / 2)) / (ch / 2), -1, 1);
+      // Find visible ratios for each element.
+      const visibleX = (clamp(x + w, cx, cx + cw) - clamp(x, cx, cx + cw)) / w;
+      const visibleY = (clamp(y + h, cy, cy + ch) - clamp(y, cy, cy + ch)) / h;
+      const viewportX = clamp((cx - (w / 2 + x - cw / 2)) / (cw / 2), -1, 1);
+      const viewportY = clamp((cy - (h / 2 + y - ch / 2)) / (ch / 2), -1, 1);
+      const visible =
+          +(opts.offset ? opts.offset <= cy :
+                          (opts.threshold || 0) < visibleX * visibleY);
 
-			obj.ctx = {
-				elementHeight: h,
-				elementWidth: w,
-				intersectX: visibleX == 1 ? 0 : sign(x - cx),
-				intersectY: visibleY == 1 ? 0 : sign(y - cy),
-				offsetX: x,
-				offsetY: y,
-				viewportX: viewportX,
-				viewportY: viewportY,
-				visibleX: visibleX,
-				visibleY: visibleY,
-				visible: +(opts.offset ? opts.offset <= cy : (opts.threshold || 0) < visibleX * visibleY)
-			};
-		});
-	};
+      obj.ctx = {
+        elementHeight: h,
+        elementWidth: w,
+        intersectX: visibleX === 1 ? 0 : sign(x - cx),
+        intersectY: visibleY === 1 ? 0 : sign(y - cy),
+        offsetX: x,
+        offsetY: y,
+        viewportX,
+        viewportY,
+        visible,
+        visibleX,
+        visibleY
+      };
+    });
+  };
 
-	const render = function() {
-		if (!elements) {
-			return;
-		}
+  const render = () => {
+    if (!elements) {
+      return;
+    }
 
-		if (changeAndDetect(doc, '_S', rootCtx)) {
-			setAttrs(doc, {
-				scrollDirX: rootCtx.scrollDirX,
-				scrollDirY: rootCtx.scrollDirY
-			});
-			props(doc, rootCtx);
-		}
-		const len = elements.length;
-		for (let x = len - 1; x > -1; x--) {
-			const obj = elements[x];
-			const el = obj.$;
-			const ctx = obj.ctx;
-			const visible = ctx.visible;
+    // Update root attributes if they have changed.
+    const rootAttributes = {
+      scrollDirX: rootCtx.scrollDirX,
+      scrollDirY: rootCtx.scrollDirY
+    };
+    if (changeAndDetect(doc, '_SA', rootAttributes)) {
+      setAttrs(doc, rootAttributes);
+    }
 
-			if (changeAndDetect(el, '_SO', ctx)) {
-				// if percentage visibility has changed, update
-				props(el, ctx);
-			}
+    // Update props if the root context has changed.
+    if (changeAndDetect(doc, '_S', rootCtx)) {
+      props(doc, rootCtx);
+    }
 
-			// handle callbacks
-			if (changeAndDetect(el, '_SV', visible)) {
-				setAttrs(el, {
-					scroll: visible ? 'in' : 'out'
-				});
+    const len = elements.length;
+    for (let x = len - 1; x > -1; x--) {
+      const obj = elements[x];
+      const el = obj.$;
+      const ctx = obj.ctx;
+      const visible = ctx.visible;
 
-				onChange(el, ctx, doc);
-				(visible ? onShown : onHidden)(el, ctx, doc);
-			}
+      if (changeAndDetect(el, '_SO', ctx)) {
+        // If percentage visibility has changed, update.
+        props(el, ctx);
+      }
 
-			// if this is shown multiple times, keep it in the list
-			if (visible && opts.once) {
-				elements.splice(x, 1);
-			}
-		}
-	};
+      // Handle JavaScript callbacks.
+      if (changeAndDetect(el, '_SV', visible)) {
+        setAttrs(el, {scroll: visible ? 'in' : 'out'});
+        onChange(el, ctx, doc);
+        (visible ? onShown : onHidden)(el, ctx, doc);
+      }
 
-	const sub = subscribe(render);
+      // if this is shown multiple times, keep it in the list
+      if (visible && opts.once) {
+        elements.splice(x, 1);
+      }
+    }
+  };
 
-	// run initialize index
-	index();
-	update();
+  const sub = subscribe(render);
 
-	// hook up document listeners to automatically detect changes
-	win[ON](RESIZE, index);
-	container[ON](SCROLL, update);
+  // Run initialize index.
+  index();
+  update();
 
-	return {
-		index: index,
-		update: update,
-		teardown() {
-			sub();
-			win[OFF](RESIZE, index);
-			container[OFF](SCROLL, update);
-		}
-	};
+  // Hook up document listeners to automatically detect changes.
+  win[ON](RESIZE, index);
+  container[ON](SCROLL, update);
+
+  return {
+    index,
+    teardown() {
+      sub();
+      win[OFF](RESIZE, index);
+      container[OFF](SCROLL, update);
+    },
+    update
+  };
 }

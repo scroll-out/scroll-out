@@ -2,7 +2,7 @@
 import typescript2 from 'rollup-plugin-typescript2'
 
 export default {
-  entry: 'src/main.ts',
+  input: 'src/main.ts',
   dest: 'lib/index.js',
   format: 'cjs',
   plugins: [

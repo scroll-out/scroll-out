@@ -4,29 +4,30 @@ declare global {
   }
 }
 
+// tslint:disable-next-line:interface-name
 export interface IScrollOutOptions {
-  scope?: Node | string;
-  scrollingElement?: Node | string;
-  targets?: Node | NodeList | Node[] | string;
-  once?: false;
-  offset?: number;
-  threshold?: number;
   cssProps?: boolean | CSSPropOptions;
+  offset?: number;
   onChange?: Function;
   onHidden?: Function;
   onShown?: Function;
+  once?: false;
+  scope?: Node | string;
+  scrollingElement?: Node | string;
+  targets?: Node | NodeList | Node[] | string;
+  threshold?: number;
 }
 
 export interface CSSPropOptions {
-  visibleX?: boolean;
-  visibleY?: boolean;
-  visible?: boolean;
-  offsetX?: boolean;
-  offsetY?: boolean;
-  elementWidth?: boolean;
   elementHeight?: boolean;
+  elementWidth?: boolean;
   intersectX?: boolean;
   intersectY?: boolean;
+  offsetX?: boolean;
+  offsetY?: boolean;
+  visible?: boolean;
+  visibleX?: boolean;
+  visibleY?: boolean;
 }
 
 export interface ScrollOut {
@@ -35,6 +36,6 @@ export interface ScrollOut {
 
 export interface ScrollOut {
   index(): void;
-  update(): void;
   teardown(): void;
+  update(): void;
 }

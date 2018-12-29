@@ -5,8 +5,8 @@ import { minify } from 'uglify-js';
 import uglifyOptions from './compress.json';
 
 export default {
-  entry: 'src/main.ts', 
-  output: [ 
+  input: 'src/main.ts',
+  output: [
     { file: 'dist/scroll-out.min.js', name: 'ScrollOut', format: 'iife' },
   ],
   plugins: [

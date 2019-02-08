@@ -138,6 +138,7 @@ export default function(opts: IScrollOutOptions) {
       // Handle JavaScript callbacks.
       if (changeAndDetect(el, '_SV', visible)) {
         setAttrs(el, {scroll: visible ? 'in' : 'out'});
+        ctx.index = x;
         onChange(el, ctx, doc);
         (visible ? onShown : onHidden)(el, ctx, doc);
       }

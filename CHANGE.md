@@ -1,6 +1,11 @@
 # Changelog
 All notable changes to this project will be documented in this file.  More specifically, breaking API changes will be noted here
 
+## [2.2.5] - 2018-02-08
+### Added
+
+- added index to ctx for JavaScript callbacks: onChange, onHidden, and onShown.
+
 ## [2.1.0] - 2018-06-28
 ### Added 
 

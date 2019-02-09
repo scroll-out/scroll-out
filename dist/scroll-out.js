@@ -187,8 +187,9 @@ var ScrollOut = (function () {
               // Handle JavaScript callbacks.
               if (changeAndDetect(el, '_SV', visible)) {
                   setAttrs(el, { scroll: visible ? 'in' : 'out' });
-                  onChange(el, ctx, doc, x);
-                  (visible ? onShown : onHidden)(el, ctx, doc, x);
+                  ctx.index = x;
+                  onChange(el, ctx, doc);
+                  (visible ? onShown : onHidden)(el, ctx, doc);
               }
               // if this is shown multiple times, keep it in the list
               if (visible && opts.once) {

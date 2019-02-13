@@ -3,6 +3,9 @@
 .editorconfig
 .gitignore
 config/
+cypress/
 node_modules/
 src/
 .rpt2_cache
+cypress.json
+CHANGE.md

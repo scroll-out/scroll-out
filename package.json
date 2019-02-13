@@ -8,6 +8,8 @@
   "scripts": {
     "build": "npm run \"build:cjs\" && npm run \"build:iife\" && npm run \"build:iife:compressed\"",
     "build:cjs": "rollup -c ./config/rollup-cjs.config.js",
+    "build:dev": "rollup -c ./config/rollup-iife.config.js",
+    "build:debug": "rollup -w -c ./config/rollup-iife.config.js",
     "build:iife": "rollup -c ./config/rollup-iife.config.js",
     "build:iife:compressed": "rollup -c ./config/rollup-iife.compressed.js",
     "compress": "uglifyjs --config-file ./config/compress.json -o dist/scroll-out.min.js dist/scroll-out.js",
@@ -15,12 +17,15 @@
     "format": "prettier --print-width 120 --single-quote --no-semi --list-different --write \"src/**/*.js\"",
     "preversion": "npm run rebuild",
     "postversion": "git push --follow-tags && npm publish",
-    "rebuild": "npm run clean && npm run build && npm run compress"
+    "rebuild": "npm run clean && npm run build && npm run compress",
+    "test": "npm run build:dev && ./node_modules/.bin/cypress run",
+    "test:debug": "npm run build:debug & ./node_modules/.bin/cypress open"
   },
   "author": "Christopher Wallis <christopher.j.wallis@gmail.com> (http://notoriousb1t.com)",
   "license": "MIT",
   "devDependencies": {
     "@types/uglify-js": "^3.0.3",
+    "cypress": "^3.1.5",
     "del-cli": "^1.1.0",
     "rollup": "^0.60.7",
     "rollup-plugin-babel-minify": "^5.0.0",

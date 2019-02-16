@@ -3,6 +3,7 @@
 context("visibility", () => {
   beforeEach(() => {
     cy.visit("cypress/index.html");
+    cy.viewport(2000, 680);
   });
 
   it("Items go visible when scrolled into view.", () => {
@@ -13,16 +14,16 @@ context("visibility", () => {
         win.ScrollOut({
           targets: ".one,.two,.three"
         }); 
-        win.document.documentElement.scrollTop = win.outerHeight
         return cy.wait(34);
       })
+      .then(() => cy.get('.two').scrollIntoView().wait(100))
       .then((() => {
         const one = win.document.querySelector('.one');
         expect(one.getAttribute('data-scroll')).to.equal('out');
         const two = win.document.querySelector('.two');
         expect(two.getAttribute('data-scroll')).to.equal('in');
         const three = win.document.querySelector('.three');
-        expect(three.getAttribute('data-scroll')).to.equal('in');
+        expect(three.getAttribute('data-scroll')).to.equal('out');
       }));
   });
 
@@ -37,14 +38,9 @@ context("visibility", () => {
         });
         return cy.wait(34);
       })
-      .then(() => {
-        win.document.documentElement.scrollTop = win.outerHeight;
-        return cy.wait(34);
-      })
-      .then(() => {
-        win.document.documentElement.scrollTop = win.outerHeight * 2
-        return cy.wait(34);
-      })
+      .then(() => cy.get('.one').scrollIntoView().wait(100))
+      .then(() => cy.get('.two').scrollIntoView().wait(100))
+      .then(() => cy.get('.three').scrollIntoView().wait(100))
       .then((() => {
         const one = win.document.querySelector('.one');
         expect(one.getAttribute('data-scroll')).to.equal('in');

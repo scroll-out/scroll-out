@@ -1,7 +1,12 @@
 # Changelog
 All notable changes to this project will be documented in this file.  More specifically, breaking API changes will be noted here
 
-## [2.2.6] - 2018-02-08
+## [2.2.7] - 2018-02-16
+### Fixed
+
+- fixed detection of inline elements.
+
+## [2.2.6] - 2018-02-16
 ### Fixed
 
 - resize event for iOS. In iOS, when the navbar comes down it counts as a resize, this was causing unexpected behavior for the "once" option because resize was erroneously reindexing the page instead of just calling an update to targets.

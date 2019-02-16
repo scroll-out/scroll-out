@@ -134,8 +134,8 @@ var ScrollOut = (function () {
                   target = target.offsetParent;
               } while (target && target !== container);
               // Get element dimensions.
-              var w = el.clientWidth;
-              var h = el.clientHeight;
+              var w = el.clientWidth || el.offsetWidth || 0;
+              var h = el.clientHeight || el.offsetHeight || 0;
               // Find visible ratios for each element.
               var visibleX = (clamp(x + w, cx, cx + cw) - clamp(x, cx, cx + cw)) / w;
               var visibleY = (clamp(y + h, cy, cy + ch) - clamp(y, cy, cy + ch)) / h;

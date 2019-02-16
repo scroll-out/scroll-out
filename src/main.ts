@@ -76,8 +76,8 @@ export default function(opts: IScrollOutOptions) {
       } while (target && target !== container);
 
       // Get element dimensions.
-      const w = el.clientWidth;
-      const h = el.clientHeight;
+      const w = el.clientWidth || el.offsetWidth || 0;
+      const h = el.clientHeight || el.offsetHeight || 0;
 
       // Find visible ratios for each element.
       const visibleX = (clamp(x + w, cx, cx + cw) - clamp(x, cx, cx + cw)) / w;

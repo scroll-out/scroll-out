@@ -157,14 +157,14 @@ export default function(opts: IScrollOutOptions) {
   update();
 
   // Hook up document listeners to automatically detect changes.
-  win[ON](RESIZE, index);
+  win[ON](RESIZE, update);
   container[ON](SCROLL, update);
 
   return {
     index,
     teardown() {
       sub();
-      win[OFF](RESIZE, index);
+      win[OFF](RESIZE, update);
       container[OFF](SCROLL, update);
     },
     update

@@ -1,6 +1,11 @@
 # Changelog
 All notable changes to this project will be documented in this file.  More specifically, breaking API changes will be noted here
 
+## NEXT Version
+
+- Improved performance by reducing objects created, making equality checks cheaper, and unsubscribing the render loop when nothing
+  has changed. This caused a 0.08kb increase in gzipped size.
+
 ## [2.2.7] - 2018-02-16
 ### Fixed
 

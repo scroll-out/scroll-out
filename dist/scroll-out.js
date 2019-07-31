@@ -5,7 +5,7 @@ var ScrollOut = (function () {
       return min > v ? min : max < v ? max : v;
   }
   function sign(x) {
-      return +(x > 0) - +(x < 0);
+      return (+(x > 0) - +(x < 0));
   }
   function round(n) {
       return Math.round(n * 10000) / 10000;
@@ -77,7 +77,6 @@ var ScrollOut = (function () {
   var RESIZE = 'resize';
   var ON = 'addEventListener';
   var OFF = 'removeEventListener';
-  var lastId = 0;
   /**
    * Creates a new instance of ScrollOut that marks elements in the viewport with
    * an "in" class and marks elements outside of the viewport with an "out"
@@ -90,114 +89,146 @@ var ScrollOut = (function () {
       var onChange = opts.onChange || noop;
       var onHidden = opts.onHidden || noop;
       var onShown = opts.onShown || noop;
+      var onScroll = opts.onScroll || noop;
       var props = opts.cssProps ? setProps(opts.cssProps) : noop;
       var se = opts.scrollingElement;
       var container = se ? $(se)[0] : win;
       var doc = se ? $(se)[0] : root;
-      var id = ++lastId;
-      var changeAndDetect = function (obj, key, value) {
-          return obj[key + id] !== (obj[key + id] = JSON.stringify(value));
-      };
-      var rootCtx;
-      // tslint:disable-next-line:no-any
-      var elements;
-      var shouldIndex;
-      var index = function () {
-          shouldIndex = true;
-      };
-      var cx, cy;
-      var update = function () {
-          if (shouldIndex) {
-              shouldIndex = false;
-              elements = $(opts.targets || '[data-scroll]', $(opts.scope || doc)[0])
-                  .map(function (el) { return ({ $: el, ctx: {} }); });
-          }
+      var rootChanged = false;
+      var scrollingElementContext = {};
+      var elementContextList;
+      var sub;
+      var clientOffsetX, clientOffsety;
+      function index() {
+          elementContextList = $(opts.targets || '[data-scroll]', $(opts.scope || doc)[0]).map(function (el) { return ({ element: el }); });
+      }
+      function update() {
           // Calculate position, direction and ratio.
-          var cw = doc.clientWidth;
-          var ch = doc.clientHeight;
-          var dirX = sign(-cx + (cx = doc.scrollLeft || win.pageXOffset));
-          var dirY = sign(-cy + (cy = doc.scrollTop || win.pageYOffset));
-          var scrollPercentX = doc.scrollLeft / (doc.scrollWidth - cw || 1);
-          var scrollPercentY = doc.scrollTop / (doc.scrollHeight - ch || 1);
-          // Call update to dom.
-          rootCtx =
-              { scrollDirX: dirX, scrollDirY: dirY, scrollPercentX: scrollPercentX, scrollPercentY: scrollPercentY };
-          elements.forEach(function (obj) {
-              var el = obj.$;
+          var clientWidth = doc.clientWidth;
+          var clientHeight = doc.clientHeight;
+          var scrollDirX = sign(-clientOffsetX + (clientOffsetX = doc.scrollLeft || win.pageXOffset));
+          var scrollDirY = sign(-clientOffsety + (clientOffsety = doc.scrollTop || win.pageYOffset));
+          var scrollPercentX = doc.scrollLeft / (doc.scrollWidth - clientWidth || 1);
+          var scrollPercentY = doc.scrollTop / (doc.scrollHeight - clientHeight || 1);
+          // Detect if the root context has changed.
+          rootChanged =
+              rootChanged ||
+                  scrollingElementContext.scrollDirX !== scrollDirX ||
+                  scrollingElementContext.scrollDirY !== scrollDirY ||
+                  scrollingElementContext.scrollPercentX !== scrollPercentX ||
+                  scrollingElementContext.scrollPercentY !== scrollPercentY;
+          scrollingElementContext.scrollDirX = scrollDirX;
+          scrollingElementContext.scrollDirY = scrollDirY;
+          scrollingElementContext.scrollPercentX = scrollPercentX;
+          scrollingElementContext.scrollPercentY = scrollPercentY;
+          var hasChildChanged;
+          for (var index_1 = 0; index_1 < elementContextList.length; index_1++) {
+              var ctx = elementContextList[index_1];
+              var element = ctx.element;
               // find the distance from the element to the scrolling container
-              var target = el;
-              var x = 0;
-              var y = 0;
+              var target = element;
+              var offsetX = 0;
+              var offsetY = 0;
               do {
-                  x += target.offsetLeft;
-                  y += target.offsetTop;
+                  offsetX += target.offsetLeft;
+                  offsetY += target.offsetTop;
                   target = target.offsetParent;
               } while (target && target !== container);
               // Get element dimensions.
-              var w = el.clientWidth || el.offsetWidth || 0;
-              var h = el.clientHeight || el.offsetHeight || 0;
+              var elementHeight = element.clientHeight || element.offsetHeight || 0;
+              var elementWidth = element.clientWidth || element.offsetWidth || 0;
               // Find visible ratios for each element.
-              var visibleX = (clamp(x + w, cx, cx + cw) - clamp(x, cx, cx + cw)) / w;
-              var visibleY = (clamp(y + h, cy, cy + ch) - clamp(y, cy, cy + ch)) / h;
-              var viewportX = clamp((cx - (w / 2 + x - cw / 2)) / (cw / 2), -1, 1);
-              var viewportY = clamp((cy - (h / 2 + y - ch / 2)) / (ch / 2), -1, 1);
-              var visible = +(opts.offset ? opts.offset <= cy :
-                  (opts.threshold || 0) < visibleX * visibleY);
-              obj.ctx = {
-                  elementHeight: h,
-                  elementWidth: w,
-                  intersectX: visibleX === 1 ? 0 : sign(x - cx),
-                  intersectY: visibleY === 1 ? 0 : sign(y - cy),
-                  offsetX: x,
-                  offsetY: y,
-                  viewportX: viewportX,
-                  viewportY: viewportY,
-                  visible: visible,
-                  visibleX: visibleX,
-                  visibleY: visibleY
-              };
-          });
-      };
-      var render = function () {
-          if (!elements) {
+              var visibleX = (clamp(offsetX + elementWidth, clientOffsetX, clientOffsetX + clientWidth) -
+                  clamp(offsetX, clientOffsetX, clientOffsetX + clientWidth)) /
+                  elementWidth;
+              var visibleY = (clamp(offsetY + elementHeight, clientOffsety, clientOffsety + clientHeight) -
+                  clamp(offsetY, clientOffsety, clientOffsety + clientHeight)) /
+                  elementHeight;
+              var intersectX = visibleX === 1 ? 0 : sign(offsetX - clientOffsetX);
+              var intersectY = visibleY === 1 ? 0 : sign(offsetY - clientOffsety);
+              var viewportX = clamp((clientOffsetX - (elementWidth / 2 + offsetX - clientWidth / 2)) / (clientWidth / 2), -1, 1);
+              var viewportY = clamp((clientOffsety - (elementHeight / 2 + offsetY - clientHeight / 2)) / (clientHeight / 2), -1, 1);
+              var visible = +(opts.offset
+                  ? opts.offset <= clientOffsety
+                  : (opts.threshold || 0) < visibleX * visibleY);
+              var changedVisible = ctx.visible !== visible;
+              var changed = changedVisible ||
+                  ctx._changed ||
+                  ctx.visible !== visible ||
+                  ctx.visibleX !== visibleX ||
+                  ctx.visibleY !== visibleY ||
+                  ctx.index !== index_1 ||
+                  ctx.elementHeight !== elementHeight ||
+                  ctx.elementWidth !== elementWidth ||
+                  ctx.offsetX !== offsetX ||
+                  ctx.offsetY !== offsetY ||
+                  ctx.intersectX !== ctx.intersectX ||
+                  ctx.intersectY !== ctx.intersectY ||
+                  ctx.viewportX !== viewportX ||
+                  ctx.viewportY !== viewportY;
+              if (changed) {
+                  hasChildChanged = true;
+                  ctx._changed = true;
+                  ctx._visibleChanged = changedVisible;
+                  ctx.visible = visible;
+                  ctx.elementHeight = elementHeight;
+                  ctx.elementWidth = elementWidth;
+                  ctx.index = index_1;
+                  ctx.offsetX = offsetX;
+                  ctx.visibleX = visibleX;
+                  ctx.visibleY = visibleY;
+                  ctx.intersectX = intersectX;
+                  ctx.intersectY = intersectY;
+                  ctx.viewportX = viewportX;
+                  ctx.viewportY = viewportY;
+                  ctx.visible = visible;
+              }
+          }
+          if ((!sub && hasChildChanged) || scrollingElementContext.__changed__) {
+              sub = subscribe(render);
+          }
+      }
+      function render() {
+          if (!elementContextList) {
               return;
           }
           // Update root attributes if they have changed.
-          var rootAttributes = {
-              scrollDirX: rootCtx.scrollDirX,
-              scrollDirY: rootCtx.scrollDirY
-          };
-          if (changeAndDetect(doc, '_SA', rootAttributes)) {
-              setAttrs(doc, rootAttributes);
+          if (rootChanged) {
+              rootChanged = false;
+              setAttrs(doc, {
+                  scrollDirX: scrollingElementContext.scrollDirX,
+                  scrollDirY: scrollingElementContext.scrollDirY
+              });
+              props(doc, scrollingElementContext);
+              onScroll(doc, scrollingElementContext, elementContextList);
           }
-          // Update props if the root context has changed.
-          if (changeAndDetect(doc, '_S', rootCtx)) {
-              props(doc, rootCtx);
-          }
-          var len = elements.length;
+          var len = elementContextList.length;
           for (var x = len - 1; x > -1; x--) {
-              var obj = elements[x];
-              var el = obj.$;
-              var ctx = obj.ctx;
+              var ctx = elementContextList[x];
+              var el = ctx.element;
               var visible = ctx.visible;
-              if (changeAndDetect(el, '_SO', ctx)) {
-                  // If percentage visibility has changed, update.
+              if (ctx._changed) {
+                  ctx._changed = false;
                   props(el, ctx);
               }
-              // Handle JavaScript callbacks.
-              if (changeAndDetect(el, '_SV', visible)) {
+              if (ctx._visibleChanged) {
                   setAttrs(el, { scroll: visible ? 'in' : 'out' });
-                  ctx.index = x;
                   onChange(el, ctx, doc);
                   (visible ? onShown : onHidden)(el, ctx, doc);
               }
               // if this is shown multiple times, keep it in the list
               if (visible && opts.once) {
-                  elements.splice(x, 1);
+                  elementContextList.splice(x, 1);
               }
           }
-      };
-      var sub = subscribe(render);
+          maybeUnsubscribe();
+      }
+      function maybeUnsubscribe() {
+          if (sub) {
+              sub();
+              sub = undefined;
+          }
+      }
       // Run initialize index.
       index();
       update();
@@ -206,12 +237,12 @@ var ScrollOut = (function () {
       container[ON](SCROLL, update);
       return {
           index: index,
+          update: update,
           teardown: function () {
-              sub();
+              maybeUnsubscribe();
               win[OFF](RESIZE, update);
               container[OFF](SCROLL, update);
-          },
-          update: update
+          }
       };
   }
 

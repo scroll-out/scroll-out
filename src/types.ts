@@ -8,9 +8,10 @@ declare global {
 export interface IScrollOutOptions {
   cssProps?: boolean | CSSPropOptions;
   offset?: number;
-  onChange?: Function;
-  onHidden?: Function;
-  onShown?: Function;
+  onChange?: (el: HTMLElement, ctx: ElementContext, doc: HTMLElement) => void;
+  onHidden?: (el: HTMLElement, ctx: ElementContext, doc: HTMLElement) => void;
+  onShown?: (el: HTMLElement, ctx: ElementContext, doc: HTMLElement) => void;
+  onScroll?: (el: HTMLElement, scrollingElementCtx: ScrollingElementContext, ctx: ElementContext[]) => void;
   once?: false;
   scope?: Node | string;
   scrollingElement?: Node | string;
@@ -28,6 +29,38 @@ export interface CSSPropOptions {
   visible?: boolean;
   visibleX?: boolean;
   visibleY?: boolean;
+}
+
+export interface ElementContext {
+  element: HTMLElement;
+  elementHeight: number;
+  elementWidth: number;
+  index: number;
+  intersectX: -1 | 0 | 1;
+  intersectY: -1 | 0 | 1;
+  offsetX: number;
+  offsetY: number;
+  viewportX: number;
+  viewportY: number;
+  visible: 0 | 1;
+  visibleX: number;
+  visibleY: number;
+}
+
+export interface ElementContextInternal extends ElementContext {
+  _changed: boolean;
+  _visibleChanged: boolean;
+}
+
+export interface ScrollingElementContext {
+  scrollDirX: number;
+  scrollDirY: number;
+  scrollPercentX: number;
+  scrollPercentY: number;
+}
+
+export interface ScrollingElementContextInternal extends ScrollingElementContext {
+  __changed__: boolean;
 }
 
 export interface ScrollOut {

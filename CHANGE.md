@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.  More speci
 
 - Improved performance by reducing objects created, making equality checks cheaper, and unsubscribing the render loop when nothing
   has changed. This caused a 0.08kb increase in gzipped size.
+- Added onScroll event handler.
 
 ## [2.2.7] - 2018-02-16
 ### Fixed

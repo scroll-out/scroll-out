@@ -1,10 +1,6 @@
 import { CSSPropOptions } from '../types';
-
 import { round } from './math';
 import { hyphenate } from './strings';
-
-export const win = window;
-export const root = document.documentElement;
 
 /** find elements */
 export function $(e: Node | Node[] | NodeList | string, parent?: Element): HTMLElement[] {
@@ -15,7 +11,7 @@ export function $(e: Node | Node[] | NodeList | string, parent?: Element): HTMLE
     ? // a single element is wrapped in an array
       [e]
     : // selector and NodeList are converted to Element[]
-      [].slice.call(e[0].nodeName ? e : (parent || root).querySelectorAll(e as string));
+      [].slice.call(e[0].nodeName ? e : (parent || document.documentElement).querySelectorAll(e as string));
 }
 
 export function setAttrs(el: Element, attrs: {}) {

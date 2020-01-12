@@ -12,15 +12,13 @@ var ScrollOut = (function () {
   }
 
   var cache = {};
-  function hyphenate(value) {
-      return cache[value] || (cache[value] = value.replace(/([A-Z])/g, replacer));
-  }
   function replacer(match) {
       return '-' + match[0].toLowerCase();
   }
+  function hyphenate(value) {
+      return cache[value] || (cache[value] = value.replace(/([A-Z])/g, replacer));
+  }
 
-  var win = window;
-  var root = document.documentElement;
   /** find elements */
   function $(e, parent) {
       return !e || e.length === 0
@@ -30,7 +28,7 @@ var ScrollOut = (function () {
               ? // a single element is wrapped in an array
                   [e]
               : // selector and NodeList are converted to Element[]
-                  [].slice.call(e[0].nodeName ? e : (parent || root).querySelectorAll(e));
+                  [].slice.call(e[0].nodeName ? e : (parent || document.documentElement).querySelectorAll(e));
   }
   function setAttrs(el, attrs) {
       // tslint:disable-next-line:forin
@@ -52,6 +50,13 @@ var ScrollOut = (function () {
 
   var clearTask;
   var subscribers = [];
+  function loop() {
+      // process subscribers
+      var s = subscribers.slice();
+      s.forEach(function (s2) { return s2(); });
+      // schedule next loop if the queue needs it
+      clearTask = subscribers.length ? requestAnimationFrame(loop) : 0;
+  }
   function subscribe(fn) {
       subscribers.push(fn);
       if (!clearTask) {
@@ -64,13 +69,6 @@ var ScrollOut = (function () {
               cancelAnimationFrame(clearTask);
           }
       };
-  }
-  function loop() {
-      // process subscribers
-      var s = subscribers.slice();
-      s.forEach(function (s2) { return s2(); });
-      // schedule next loop if the queue needs it
-      clearTask = subscribers.length ? requestAnimationFrame(loop) : 0;
   }
 
   function noop() { }
@@ -90,8 +88,8 @@ var ScrollOut = (function () {
       var onScroll = opts.onScroll || noop;
       var props = opts.cssProps ? setProps(opts.cssProps) : noop;
       var se = opts.scrollingElement;
-      var container = se ? $(se)[0] : win;
-      var doc = se ? $(se)[0] : root;
+      var container = se ? $(se)[0] : window;
+      var doc = se ? $(se)[0] : document.documentElement;
       var rootChanged = false;
       var scrollingElementContext = {};
       var elementContextList = [];
@@ -104,8 +102,8 @@ var ScrollOut = (function () {
           // Calculate position, direction and ratio.
           var clientWidth = doc.clientWidth;
           var clientHeight = doc.clientHeight;
-          var scrollDirX = sign(-clientOffsetX + (clientOffsetX = doc.scrollLeft || win.pageXOffset));
-          var scrollDirY = sign(-clientOffsety + (clientOffsety = doc.scrollTop || win.pageYOffset));
+          var scrollDirX = sign(-clientOffsetX + (clientOffsetX = doc.scrollLeft || window.pageXOffset));
+          var scrollDirY = sign(-clientOffsety + (clientOffsety = doc.scrollTop || window.pageYOffset));
           var scrollPercentX = doc.scrollLeft / (doc.scrollWidth - clientWidth || 1);
           var scrollPercentY = doc.scrollTop / (doc.scrollHeight - clientHeight || 1);
           // Detect if the root context has changed.
@@ -227,14 +225,14 @@ var ScrollOut = (function () {
       index();
       update();
       // Hook up document listeners to automatically detect changes.
-      win.addEventListener('resize', update);
+      window.addEventListener('resize', update);
       container.addEventListener('scroll', update);
       return {
           index: index,
           update: update,
           teardown: function () {
               maybeUnsubscribe();
-              win.removeEventListener('resize', update);
+              window.removeEventListener('resize', update);
               container.removeEventListener('scroll', update);
           }
       };

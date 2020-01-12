@@ -3,7 +3,7 @@ import {
   ElementContextInternal,
   ScrollingElementContextInternal
 } from './types';
-import { $, root, setAttrs, setProps, win } from './utils/dom';
+import { $, setAttrs, setProps } from './utils/dom';
 import { subscribe } from './utils/loop';
 import { clamp, sign } from './utils/math';
 import { noop } from './utils/noop';
@@ -25,8 +25,8 @@ export default function(opts: IScrollOutOptions) {
   const props = opts.cssProps ? setProps(opts.cssProps) : noop;
 
   const se = opts.scrollingElement;
-  const container = se ? $(se)[0] : win;
-  const doc = se ? $(se)[0] : root;
+  const container = se ? $(se)[0] : window;
+  const doc = se ? $(se)[0] : document.documentElement;
 
   let rootChanged = false;
   const scrollingElementContext = {} as ScrollingElementContextInternal;
@@ -44,8 +44,8 @@ export default function(opts: IScrollOutOptions) {
     // Calculate position, direction and ratio.
     const clientWidth = doc.clientWidth;
     const clientHeight = doc.clientHeight;
-    const scrollDirX = sign(-clientOffsetX + (clientOffsetX = doc.scrollLeft || win.pageXOffset));
-    const scrollDirY = sign(-clientOffsety + (clientOffsety = doc.scrollTop || win.pageYOffset));
+    const scrollDirX = sign(-clientOffsetX + (clientOffsetX = doc.scrollLeft || window.pageXOffset));
+    const scrollDirY = sign(-clientOffsety + (clientOffsety = doc.scrollTop || window.pageYOffset));
     const scrollPercentX = doc.scrollLeft / (doc.scrollWidth - clientWidth || 1);
     const scrollPercentY = doc.scrollTop / (doc.scrollHeight - clientHeight || 1);
 
@@ -194,7 +194,7 @@ export default function(opts: IScrollOutOptions) {
   update();
 
   // Hook up document listeners to automatically detect changes.
-  win.addEventListener('resize', update);
+  window.addEventListener('resize', update);
   container.addEventListener('scroll', update);
 
   return {
@@ -202,7 +202,7 @@ export default function(opts: IScrollOutOptions) {
     update,
     teardown() {
       maybeUnsubscribe();
-      win.removeEventListener('resize', update);
+      window.removeEventListener('resize', update);
       container.removeEventListener('scroll', update);
     }
   };

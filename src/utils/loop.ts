@@ -1,6 +1,15 @@
 let clearTask: number | undefined;
 let subscribers = [];
 
+function loop() {
+  // process subscribers
+  const s = subscribers.slice();
+  s.forEach(s2 => s2());
+
+  // schedule next loop if the queue needs it
+  clearTask = subscribers.length ? requestAnimationFrame(loop) : 0;
+}
+
 export function subscribe(fn: () => void) {
   subscribers.push(fn);
   if (!clearTask) {
@@ -13,13 +22,4 @@ export function subscribe(fn: () => void) {
       cancelAnimationFrame(clearTask);
     }
   };
-}
-
-function loop() {
-  // process subscribers
-  const s = subscribers.slice();
-  s.forEach(s2 => s2());
-
-  // schedule next loop if the queue needs it
-  clearTask = subscribers.length ? requestAnimationFrame(loop) : 0;
 }

@@ -130,6 +130,7 @@ export default function(opts: IScrollOutOptions) {
         ctx.elementWidth = elementWidth;
         ctx.index = index;
         ctx.offsetX = offsetX;
+        ctx.offsetY = offsetY;
         ctx.visibleX = visibleX;
         ctx.visibleY = visibleY;
         ctx.intersectX = intersectX;

@@ -32,21 +32,23 @@ var ScrollOut = (function () {
               : // selector and NodeList are converted to Element[]
                   [].slice.call(e[0].nodeName ? e : (parent || root).querySelectorAll(e));
   }
-  var setAttrs = function (el, attrs) {
+  function setAttrs(el, attrs) {
       // tslint:disable-next-line:forin
       for (var key in attrs) {
-          el.setAttribute("data-" + hyphenate(key), attrs[key]);
+          if (key.indexOf('_')) {
+              el.setAttribute('data-' + hyphenate(key), attrs[key]);
+          }
       }
-  };
-  var setProps = function (cssProps) {
+  }
+  function setProps(cssProps) {
       return function (el, props) {
           for (var key in props) {
-              if (cssProps === true || cssProps[key]) {
-                  el.style.setProperty("--" + hyphenate(key), round(props[key]));
+              if (key.indexOf('_') && (cssProps === true || cssProps[key])) {
+                  el.style.setProperty('--' + hyphenate(key), round(props[key]));
               }
           }
       };
-  };
+  }
 
   var clearTask;
   var subscribers = [];
@@ -73,10 +75,6 @@ var ScrollOut = (function () {
 
   function noop() { }
 
-  var SCROLL = 'scroll';
-  var RESIZE = 'resize';
-  var ON = 'addEventListener';
-  var OFF = 'removeEventListener';
   /**
    * Creates a new instance of ScrollOut that marks elements in the viewport with
    * an "in" class and marks elements outside of the viewport with an "out"
@@ -96,9 +94,9 @@ var ScrollOut = (function () {
       var doc = se ? $(se)[0] : root;
       var rootChanged = false;
       var scrollingElementContext = {};
-      var elementContextList;
-      var sub;
+      var elementContextList = [];
       var clientOffsetX, clientOffsety;
+      var sub = subscribe(render);
       function index() {
           elementContextList = $(opts.targets || '[data-scroll]', $(opts.scope || doc)[0]).map(function (el) { return ({ element: el }); });
       }
@@ -121,7 +119,7 @@ var ScrollOut = (function () {
           scrollingElementContext.scrollDirY = scrollDirY;
           scrollingElementContext.scrollPercentX = scrollPercentX;
           scrollingElementContext.scrollPercentY = scrollPercentY;
-          var hasChildChanged;
+          var childChanged = false;
           for (var index_1 = 0; index_1 < elementContextList.length; index_1++) {
               var ctx = elementContextList[index_1];
               var element = ctx.element;
@@ -152,9 +150,8 @@ var ScrollOut = (function () {
                   ? opts.offset <= clientOffsety
                   : (opts.threshold || 0) < visibleX * visibleY);
               var changedVisible = ctx.visible !== visible;
-              var changed = changedVisible ||
-                  ctx._changed ||
-                  ctx.visible !== visible ||
+              var changed = ctx._changed ||
+                  changedVisible ||
                   ctx.visibleX !== visibleX ||
                   ctx.visibleY !== visibleY ||
                   ctx.index !== index_1 ||
@@ -167,7 +164,7 @@ var ScrollOut = (function () {
                   ctx.viewportX !== viewportX ||
                   ctx.viewportY !== viewportY;
               if (changed) {
-                  hasChildChanged = true;
+                  childChanged = true;
                   ctx._changed = true;
                   ctx._visibleChanged = changedVisible;
                   ctx.visible = visible;
@@ -184,14 +181,12 @@ var ScrollOut = (function () {
                   ctx.visible = visible;
               }
           }
-          if ((!sub && hasChildChanged) || scrollingElementContext.__changed__) {
+          if (!sub && (rootChanged || childChanged)) {
               sub = subscribe(render);
           }
       }
       function render() {
-          if (!elementContextList) {
-              return;
-          }
+          maybeUnsubscribe();
           // Update root attributes if they have changed.
           if (rootChanged) {
               rootChanged = false;
@@ -221,7 +216,6 @@ var ScrollOut = (function () {
                   elementContextList.splice(x, 1);
               }
           }
-          maybeUnsubscribe();
       }
       function maybeUnsubscribe() {
           if (sub) {
@@ -233,15 +227,15 @@ var ScrollOut = (function () {
       index();
       update();
       // Hook up document listeners to automatically detect changes.
-      win[ON](RESIZE, update);
-      container[ON](SCROLL, update);
+      win.addEventListener('resize', update);
+      container.addEventListener('scroll', update);
       return {
           index: index,
           update: update,
           teardown: function () {
               maybeUnsubscribe();
-              win[OFF](RESIZE, update);
-              container[OFF](SCROLL, update);
+              win.removeEventListener('resize', update);
+              container.removeEventListener('scroll', update);
           }
       };
   }

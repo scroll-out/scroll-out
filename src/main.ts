@@ -8,11 +8,6 @@ import { subscribe } from './utils/loop';
 import { clamp, sign } from './utils/math';
 import { noop } from './utils/noop';
 
-const SCROLL = 'scroll';
-const RESIZE = 'resize';
-const ON = 'addEventListener';
-const OFF = 'removeEventListener';
-
 /**
  * Creates a new instance of ScrollOut that marks elements in the viewport with
  * an "in" class and marks elements outside of the viewport with an "out"
@@ -35,9 +30,9 @@ export default function(opts: IScrollOutOptions) {
 
   let rootChanged = false;
   const scrollingElementContext = {} as ScrollingElementContextInternal;
-  let elementContextList: ElementContextInternal[];
-  let sub: () => void | undefined;
+  let elementContextList: ElementContextInternal[] = [];
   let clientOffsetX: number, clientOffsety: number;
+  let sub = subscribe(render);
 
   function index() {
     elementContextList = $(opts.targets || '[data-scroll]', $(opts.scope || doc)[0]).map(
@@ -66,7 +61,7 @@ export default function(opts: IScrollOutOptions) {
     scrollingElementContext.scrollPercentX = scrollPercentX;
     scrollingElementContext.scrollPercentY = scrollPercentY;
 
-    let hasChildChanged: true | undefined;
+    let childChanged = false;
     for (let index = 0; index < elementContextList.length; index++) {
       const ctx = elementContextList[index];
       const element = ctx.element;
@@ -112,9 +107,8 @@ export default function(opts: IScrollOutOptions) {
 
       const changedVisible = ctx.visible !== visible;
       const changed =
-        changedVisible ||
         ctx._changed ||
-        ctx.visible !== visible ||
+        changedVisible ||
         ctx.visibleX !== visibleX ||
         ctx.visibleY !== visibleY ||
         ctx.index !== index ||
@@ -128,7 +122,7 @@ export default function(opts: IScrollOutOptions) {
         ctx.viewportY !== viewportY;
 
       if (changed) {
-        hasChildChanged = true;
+        childChanged = true;
         ctx._changed = true;
         ctx._visibleChanged = changedVisible;
         ctx.visible = visible;
@@ -146,15 +140,13 @@ export default function(opts: IScrollOutOptions) {
       }
     }
 
-    if ((!sub && hasChildChanged) || scrollingElementContext.__changed__) {
+    if (!sub && (rootChanged || childChanged)) {
       sub = subscribe(render);
     }
   }
 
   function render() {
-    if (!elementContextList) {
-      return;
-    }
+    maybeUnsubscribe();
 
     // Update root attributes if they have changed.
     if (rootChanged) {
@@ -188,7 +180,6 @@ export default function(opts: IScrollOutOptions) {
         elementContextList.splice(x, 1);
       }
     }
-    maybeUnsubscribe();
   }
 
   function maybeUnsubscribe() {
@@ -203,16 +194,16 @@ export default function(opts: IScrollOutOptions) {
   update();
 
   // Hook up document listeners to automatically detect changes.
-  win[ON](RESIZE, update);
-  container[ON](SCROLL, update);
+  win.addEventListener('resize', update);
+  container.addEventListener('scroll', update);
 
   return {
     index,
     update,
     teardown() {
       maybeUnsubscribe();
-      win[OFF](RESIZE, update);
-      container[OFF](SCROLL, update);
+      win.removeEventListener('resize', update);
+      container.removeEventListener('scroll', update);
     }
   };
 }

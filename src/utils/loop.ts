@@ -1,7 +1,7 @@
-let clearTask;
+let clearTask: number | undefined;
 let subscribers = [];
 
-export function subscribe(fn) {
+export function subscribe(fn: () => void) {
   subscribers.push(fn);
   if (!clearTask) {
     loop();

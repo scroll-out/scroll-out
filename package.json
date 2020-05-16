@@ -25,7 +25,7 @@
   "license": "MIT",
   "devDependencies": {
     "@types/uglify-js": "^3.0.3",
-    "cypress": "^3.4.1",
+    "cypress": "^4.5.0",
     "del-cli": "^1.1.0",
     "rollup": "^0.60.7",
     "rollup-plugin-babel-minify": "^5.0.0",

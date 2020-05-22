@@ -200,17 +200,26 @@ export default function(opts: IScrollOutOptions) {
   update();
   render();
 
+  // Collapses sequential updates into a single update.
+  let updateTaskId = 0;
+  const onUpdate = () => {
+    updateTaskId = updateTaskId || setTimeout(() => {
+      updateTaskId = 0;
+      update();
+    }, 0) as unknown as number;
+  };
+
   // Hook up document listeners to automatically detect changes.
-  window.addEventListener('resize', update);
-  container.addEventListener('scroll', update);
+  window.addEventListener('resize', onUpdate);
+  container.addEventListener('scroll', onUpdate);
 
   return {
     index,
     update,
     teardown() {
       maybeUnsubscribe();
-      window.removeEventListener('resize', update);
-      container.removeEventListener('scroll', update);
+      window.removeEventListener('resize', onUpdate);
+      container.removeEventListener('scroll', onUpdate);
     }
   };
 }

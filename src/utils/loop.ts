@@ -2,19 +2,20 @@ let clearTask: number | undefined;
 let subscribers = [];
 
 function loop() {
-  // process subscribers
-  const s = subscribers.slice();
-  s.forEach(s2 => s2());
+  clearTask = 0;
+  subscribers.slice().forEach(s2 => s2());
+  enqueue();
+}
 
-  // schedule next loop if the queue needs it
-  clearTask = subscribers.length ? requestAnimationFrame(loop) : 0;
+function enqueue() {
+  if (!clearTask && subscribers.length) {
+    clearTask = requestAnimationFrame(loop);
+  }
 }
 
 export function subscribe(fn: () => void): () => void {
   subscribers.push(fn);
-  if (!clearTask) {
-    loop();
-  }
+  enqueue();
   return () => {
     subscribers = subscribers.filter(s => s !== fn);
     if (!subscribers.length && clearTask) {

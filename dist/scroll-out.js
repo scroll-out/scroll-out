@@ -51,17 +51,18 @@ var ScrollOut = (function () {
   var clearTask;
   var subscribers = [];
   function loop() {
-      // process subscribers
-      var s = subscribers.slice();
-      s.forEach(function (s2) { return s2(); });
-      // schedule next loop if the queue needs it
-      clearTask = subscribers.length ? requestAnimationFrame(loop) : 0;
+      clearTask = 0;
+      subscribers.slice().forEach(function (s2) { return s2(); });
+      enqueue();
+  }
+  function enqueue() {
+      if (!clearTask && subscribers.length) {
+          clearTask = requestAnimationFrame(loop);
+      }
   }
   function subscribe(fn) {
       subscribers.push(fn);
-      if (!clearTask) {
-          loop();
-      }
+      enqueue();
       return function () {
           subscribers = subscribers.filter(function (s) { return s !== fn; });
           if (!subscribers.length && clearTask) {
@@ -236,16 +237,24 @@ var ScrollOut = (function () {
       index();
       update();
       render();
+      // Collapses sequential updates into a single update.
+      var updateTaskId = 0;
+      var onUpdate = function () {
+          updateTaskId = updateTaskId || setTimeout(function () {
+              updateTaskId = 0;
+              update();
+          }, 0);
+      };
       // Hook up document listeners to automatically detect changes.
-      window.addEventListener('resize', update);
-      container.addEventListener('scroll', update);
+      window.addEventListener('resize', onUpdate);
+      container.addEventListener('scroll', onUpdate);
       return {
           index: index,
           update: update,
           teardown: function () {
               maybeUnsubscribe();
-              window.removeEventListener('resize', update);
-              container.removeEventListener('scroll', update);
+              window.removeEventListener('resize', onUpdate);
+              container.removeEventListener('scroll', onUpdate);
           }
       };
   }

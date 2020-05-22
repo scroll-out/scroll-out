@@ -18,8 +18,8 @@ export function subscribe(fn: () => void) {
   return () => {
     subscribers = subscribers.filter(s => s !== fn);
     if (!subscribers.length && clearTask) {
-      clearTask = 0;
       cancelAnimationFrame(clearTask);
+      clearTask = 0;
     }
   };
 }

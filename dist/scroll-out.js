@@ -65,12 +65,15 @@ var ScrollOut = (function () {
       return function () {
           subscribers = subscribers.filter(function (s) { return s !== fn; });
           if (!subscribers.length && clearTask) {
-              clearTask = 0;
               cancelAnimationFrame(clearTask);
+              clearTask = 0;
           }
       };
   }
 
+  function unwrap(value) {
+      return typeof value === 'function' ? value() : value;
+  }
   function noop() { }
 
   /**
@@ -144,9 +147,16 @@ var ScrollOut = (function () {
               var intersectY = visibleY === 1 ? 0 : sign(offsetY - clientOffsety);
               var viewportX = clamp((clientOffsetX - (elementWidth / 2 + offsetX - clientWidth / 2)) / (clientWidth / 2), -1, 1);
               var viewportY = clamp((clientOffsety - (elementHeight / 2 + offsetY - clientHeight / 2)) / (clientHeight / 2), -1, 1);
-              var visible = +(opts.offset
-                  ? opts.offset <= clientOffsety
-                  : (opts.threshold || 0) < visibleX * visibleY);
+              var visible = void 0;
+              if (opts.offset) {
+                  visible = unwrap(opts.offset) <= clientOffsety ? 1 : 0;
+              }
+              else if ((unwrap(opts.threshold) || 0) < visibleX * visibleY) {
+                  visible = 1;
+              }
+              else {
+                  visible = 0;
+              }
               var changedVisible = ctx.visible !== visible;
               var changed = ctx._changed ||
                   changedVisible ||

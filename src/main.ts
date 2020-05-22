@@ -6,7 +6,7 @@ import {
 import { $, setAttrs, setProps } from './utils/dom';
 import { subscribe } from './utils/loop';
 import { clamp, sign } from './utils/math';
-import { noop } from './utils/noop';
+import { noop, unwrap } from './utils/functional';
 
 /**
  * Creates a new instance of ScrollOut that marks elements in the viewport with
@@ -101,9 +101,14 @@ export default function(opts: IScrollOutOptions) {
         1
       );
 
-      const visible = +(opts.offset
-        ? opts.offset <= clientOffsety
-        : (opts.threshold || 0) < visibleX * visibleY) as 0 | 1;
+      let visible: 0|1;
+      if (opts.offset) {
+        visible = unwrap(opts.offset) <= clientOffsety ? 1 : 0;
+      } else if ((unwrap(opts.threshold )|| 0) < visibleX * visibleY) {
+        visible = 1;
+      } else {
+        visible = 0;
+      }
 
       const changedVisible = ctx.visible !== visible;
       const changed =

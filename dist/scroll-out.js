@@ -97,7 +97,7 @@ var ScrollOut = (function () {
       var scrollingElementContext = {};
       var elementContextList = [];
       var clientOffsetX, clientOffsety;
-      var sub = subscribe(render);
+      var sub;
       function index() {
           elementContextList = $(opts.targets || '[data-scroll]', $(opts.scope || doc)[0]).map(function (el) { return ({ element: el }); });
       }
@@ -235,6 +235,7 @@ var ScrollOut = (function () {
       // Run initialize index.
       index();
       update();
+      render();
       // Hook up document listeners to automatically detect changes.
       window.addEventListener('resize', update);
       container.addEventListener('scroll', update);

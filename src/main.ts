@@ -32,7 +32,7 @@ export default function(opts: IScrollOutOptions) {
   const scrollingElementContext = {} as ScrollingElementContextInternal;
   let elementContextList: ElementContextInternal[] = [];
   let clientOffsetX: number, clientOffsety: number;
-  let sub = subscribe(render);
+  let sub: (() => void) | undefined
 
   function index() {
     elementContextList = $(opts.targets || '[data-scroll]', $(opts.scope || doc)[0]).map(
@@ -198,6 +198,7 @@ export default function(opts: IScrollOutOptions) {
   // Run initialize index.
   index();
   update();
+  render();
 
   // Hook up document listeners to automatically detect changes.
   window.addEventListener('resize', update);

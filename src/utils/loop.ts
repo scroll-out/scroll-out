@@ -10,7 +10,7 @@ function loop() {
   clearTask = subscribers.length ? requestAnimationFrame(loop) : 0;
 }
 
-export function subscribe(fn: () => void) {
+export function subscribe(fn: () => void): () => void {
   subscribers.push(fn);
   if (!clearTask) {
     loop();

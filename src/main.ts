@@ -13,7 +13,7 @@ import { noop, unwrap } from './utils/functional';
  * an "in" class and marks elements outside of the viewport with an "out"
  */
 // tslint:disable-next-line:no-default-export
-export default function(opts: IScrollOutOptions) {
+export default function (opts: IScrollOutOptions) {
   // Apply default options.
   opts = opts || {};
 
@@ -101,10 +101,10 @@ export default function(opts: IScrollOutOptions) {
         1
       );
 
-      let visible: 0|1;
+      let visible: 0 | 1;
       if (opts.offset) {
-        visible = unwrap(opts.offset) <= clientOffsety ? 1 : 0;
-      } else if ((unwrap(opts.threshold )|| 0) < visibleX * visibleY) {
+        visible = unwrap(opts.offset, element, ctx, doc) <= clientOffsety ? 1 : 0;
+      } else if ((unwrap(opts.threshold, element, ctx, doc) || 0) < visibleX * visibleY) {
         visible = 1;
       } else {
         visible = 0;

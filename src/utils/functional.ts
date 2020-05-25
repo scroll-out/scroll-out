@@ -1,6 +1,6 @@
-import { Monad } from "../types";
+import { ValueOrProvider, ElementContext } from "../types";
 
-export function unwrap<T extends number|string>(value: Monad<T>) {
-    return typeof value === 'function' ? value() : value;
+export function unwrap<T extends number | string>(value: ValueOrProvider<T>, el: HTMLElement, ctx: ElementContext, doc: HTMLElement) {
+    return typeof value === 'function' ? value(el, ctx, doc) : value;
 }
-export function noop() {}
+export function noop() { }

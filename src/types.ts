@@ -7,19 +7,21 @@ declare global {
 // tslint:disable-next-line:interface-name
 export interface IScrollOutOptions {
   cssProps?: boolean | CSSPropOptions;
-  offset?: Monad<number>;
-  onChange?: (el: HTMLElement, ctx: ElementContext, doc: HTMLElement) => void;
-  onHidden?: (el: HTMLElement, ctx: ElementContext, doc: HTMLElement) => void;
-  onShown?: (el: HTMLElement, ctx: ElementContext, doc: HTMLElement) => void;
+  offset?: ValueOrProvider<number>;
+  onChange?: TargetEventCallback;
+  onHidden?: TargetEventCallback;
+  onShown?: TargetEventCallback;
   onScroll?: (el: HTMLElement, scrollingElementCtx: ScrollingElementContext, ctx: ElementContext[]) => void;
   once?: false;
   scope?: Node | string;
   scrollingElement?: Node | string;
   targets?: Node | NodeList | Node[] | string;
-  threshold?: Monad<number>;
+  threshold?: ValueOrProvider<number>;
 }
 
-export type Monad<T extends string|number> = T|(() => T);
+export type TargetEventCallback = (el: HTMLElement, ctx: ElementContext, doc: HTMLElement) => void;
+export type ValueProvider<T> = (el: HTMLElement, ctx: ElementContext, doc: HTMLElement) => T;
+export type ValueOrProvider<T extends string | number> = T | (ValueProvider<T>);
 
 export interface CSSPropOptions {
   elementHeight?: boolean;

@@ -72,8 +72,8 @@ var ScrollOut = (function () {
       };
   }
 
-  function unwrap(value) {
-      return typeof value === 'function' ? value() : value;
+  function unwrap(value, el, ctx, doc) {
+      return typeof value === 'function' ? value(el, ctx, doc) : value;
   }
   function noop() { }
 
@@ -150,9 +150,9 @@ var ScrollOut = (function () {
               var viewportY = clamp((clientOffsety - (elementHeight / 2 + offsetY - clientHeight / 2)) / (clientHeight / 2), -1, 1);
               var visible = void 0;
               if (opts.offset) {
-                  visible = unwrap(opts.offset) <= clientOffsety ? 1 : 0;
+                  visible = unwrap(opts.offset, element, ctx, doc) <= clientOffsety ? 1 : 0;
               }
-              else if ((unwrap(opts.threshold) || 0) < visibleX * visibleY) {
+              else if ((unwrap(opts.threshold, element, ctx, doc) || 0) < visibleX * visibleY) {
                   visible = 1;
               }
               else {

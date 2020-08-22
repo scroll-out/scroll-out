@@ -212,8 +212,7 @@ var ScrollOut = (function () {
               var ctx = elementContextList[x];
               var el = ctx.element;
               var visible = ctx.visible;
-              var justOnce = el.hasAttribute('data-scroll-once') || false; // Once
-              var keep = el.hasAttribute('data-scroll-keep') || false; //Keep
+              var justOnce = el.hasAttribute('scrollout-once') || false; // Once
               if (ctx._changed) {
                   ctx._changed = false;
                   props(el, ctx);
@@ -224,10 +223,7 @@ var ScrollOut = (function () {
                   (visible ? onShown : onHidden)(el, ctx, doc);
               }
               // if this is shown multiple times, keep it in the list
-              if (visible && !opts.once && justOnce) { // Multiple times but this element just display it once
-                  elementContextList.splice(x, 1);
-              }
-              else if (visible && opts.once && !keep) { // Once but this element keep displaying
+              if (visible && !opts.once && justOnce) { // or if this element just display it once
                   elementContextList.splice(x, 1);
               }
           }

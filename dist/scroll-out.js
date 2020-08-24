@@ -223,7 +223,7 @@ var ScrollOut = (function () {
                   (visible ? onShown : onHidden)(el, ctx, doc);
               }
               // if this is shown multiple times, keep it in the list
-              if (visible && !opts.once && justOnce) { // or if this element just display it once
+              if (visible && (opts.once || justOnce)) { // or if this element just display it once
                   elementContextList.splice(x, 1);
               }
           }

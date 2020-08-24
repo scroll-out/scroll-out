@@ -170,6 +170,7 @@ export default function (opts: IScrollOutOptions) {
       const ctx = elementContextList[x];
       const el = ctx.element;
       const visible = ctx.visible;
+      var justOnce = el.hasAttribute('scrollout-once') || false;  // Once
 
       if (ctx._changed) {
         ctx._changed = false;
@@ -180,9 +181,8 @@ export default function (opts: IScrollOutOptions) {
         onChange(el, ctx, doc);
         (visible ? onShown : onHidden)(el, ctx, doc);
       }
-
       // if this is shown multiple times, keep it in the list
-      if (visible && opts.once) {
+      if (visible && (opts.once || justOnce)) {    // or if this element just display it once
         elementContextList.splice(x, 1);
       }
     }

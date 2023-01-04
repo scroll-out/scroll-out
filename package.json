@@ -28,7 +28,7 @@
     "cypress": "^4.5.0",
     "del-cli": "^1.1.0",
     "rollup": "^0.60.7",
-    "rollup-plugin-babel-minify": "^5.0.0",
+    "rollup-plugin-babel-minify": "^10.0.0",
     "rollup-plugin-filesize": "^2.0.0",
     "rollup-plugin-typescript2": "^0.22.1",
     "rollup-plugin-uglify": "^4.0.0",

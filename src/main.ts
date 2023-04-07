@@ -101,6 +101,15 @@ export default function (opts: IScrollOutOptions) {
         1
       );
 
+      //Check if element is moving in or out of focus and apply correct threshold if thresholdInOut is set
+      if(opts.thresholdInOut) {
+        if(ctx.visibleY < visibleY || ctx.visibleX < visibleX) {
+          opts.threshold = opts.thresholdInOut.in;
+        } else {
+          opts.threshold = opts.thresholdInOut.out;
+        }
+      }
+
       let visible: 0 | 1;
       if (opts.offset) {
         visible = unwrap(opts.offset, element, ctx, doc) <= clientOffsety ? 1 : 0;

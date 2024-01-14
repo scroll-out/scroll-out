@@ -148,6 +148,15 @@ var ScrollOut = (function () {
               var intersectY = visibleY === 1 ? 0 : sign(offsetY - clientOffsety);
               var viewportX = clamp((clientOffsetX - (elementWidth / 2 + offsetX - clientWidth / 2)) / (clientWidth / 2), -1, 1);
               var viewportY = clamp((clientOffsety - (elementHeight / 2 + offsetY - clientHeight / 2)) / (clientHeight / 2), -1, 1);
+              //Check if element is moving in or out of focus and apply correct threshold if thresholdInOut is set
+              if (opts.thresholdInOut) {
+                  if (ctx.visibleY < visibleY || ctx.visibleX < visibleX) {
+                      opts.threshold = opts.thresholdInOut["in"];
+                  }
+                  else {
+                      opts.threshold = opts.thresholdInOut.out;
+                  }
+              }
               var visible = void 0;
               if (opts.offset) {
                   visible = unwrap(opts.offset, element, ctx, doc) <= clientOffsety ? 1 : 0;

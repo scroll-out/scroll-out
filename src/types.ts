@@ -17,6 +17,7 @@ export interface IScrollOutOptions {
   scrollingElement?: Node | string;
   targets?: Node | NodeList | Node[] | string;
   threshold?: ValueOrProvider<number>;
+  thresholdInOut?: ThresholdInOut;
 }
 
 export type TargetEventCallback = (el: HTMLElement, ctx: ElementContext, doc: HTMLElement) => void;
@@ -75,4 +76,9 @@ export interface ScrollOut {
   index(): void;
   teardown(): void;
   update(): void;
+}
+
+export interface ThresholdInOut {
+  in: number,
+  out: number,
 }
